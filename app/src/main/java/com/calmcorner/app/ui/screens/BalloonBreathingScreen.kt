@@ -1,0 +1,120 @@
+package com.calmcorner.app.ui.screens
+
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.unit.dp
+import com.calmcorner.app.data.Tool
+import com.calmcorner.app.ui.components.KeepScreenOn
+import com.calmcorner.app.ui.components.PaceSelector
+import com.calmcorner.app.ui.components.PhaseKind
+import com.calmcorner.app.ui.components.PhaseLabel
+import com.calmcorner.app.ui.components.StartPauseRow
+import com.calmcorner.app.ui.components.TimedPhase
+import com.calmcorner.app.ui.components.ToolScaffold
+import com.calmcorner.app.ui.components.breathsText
+import com.calmcorner.app.ui.components.rememberPhaseBuzz
+import com.calmcorner.app.ui.components.rememberPhaseTimer
+
+@Composable
+fun BalloonBreathingScreen(onBack: () -> Unit) {
+    val color = Tool.BalloonBreathing.color
+    var pace by rememberSaveable { mutableIntStateOf(4) }
+    var running by rememberSaveable { mutableStateOf(false) }
+    // Longer out-breath than in-breath helps the body settle.
+    val phases = remember(pace) {
+        listOf(
+            TimedPhase("Breathe in", pace.toFloat(), PhaseKind.BreatheIn),
+            TimedPhase("Hold", 1.5f, PhaseKind.Hold),
+            TimedPhase("Breathe out", pace + 2f, PhaseKind.BreatheOut),
+        )
+    }
+    val timer = rememberPhaseTimer(phases, running, onPhaseStart = rememberPhaseBuzz())
+    KeepScreenOn()
+
+    val eased = FastOutSlowInEasing.transform(timer.progress)
+    val fullness = when (timer.phase.kind) {
+        PhaseKind.BreatheIn -> eased
+        PhaseKind.BreatheOut -> 1f - eased
+        else -> 1f
+    }
+
+    ToolScaffold(
+        title = Tool.BalloonBreathing.title,
+        instructions = "Put a hand on your tummy. Breathe in through your nose to fill your belly balloon, then let it out slowly through your mouth.",
+        onBack = onBack,
+    ) {
+        Spacer(Modifier.weight(1f))
+        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxWidth(0.9f).aspectRatio(0.9f)) {
+            val stringColor = MaterialTheme.colorScheme.onSurfaceVariant
+            Canvas(Modifier.matchParentSize()) {
+                val maxR = size.minDimension * 0.40f
+                val minR = maxR * 0.42f
+                val r = minR + (maxR - minR) * fullness
+                val center = Offset(size.width / 2f, size.height * 0.45f)
+                // String
+                val bottom = center.y + r
+                val string = Path().apply {
+                    moveTo(center.x, bottom + 10f)
+                    cubicTo(
+                        center.x - 30f, bottom + 60f,
+                        center.x + 30f, bottom + 110f,
+                        center.x, size.height,
+                    )
+                }
+                drawPath(string, stringColor.copy(alpha = 0.5f), style = Stroke(3.dp.toPx()))
+                // Knot
+                val knot = Path().apply {
+                    moveTo(center.x, bottom - 4f)
+                    lineTo(center.x - 14f, bottom + 16f)
+                    lineTo(center.x + 14f, bottom + 16f)
+                    close()
+                }
+                drawPath(knot, color)
+                // Balloon (slightly taller than wide)
+                drawOval(
+                    color,
+                    topLeft = Offset(center.x - r * 0.92f, center.y - r * 1.05f),
+                    size = androidx.compose.ui.geometry.Size(r * 1.84f, r * 2.05f),
+                )
+                // Shine
+                drawOval(
+                    Color.White.copy(alpha = 0.35f),
+                    topLeft = Offset(center.x - r * 0.55f, center.y - r * 0.75f),
+                    size = androidx.compose.ui.geometry.Size(r * 0.35f, r * 0.55f),
+                )
+            }
+        }
+        PhaseLabel(
+            label = if (running || timer.progress > 0f) timer.phase.label else "Ready?",
+            secondsLeft = timer.secondsLeft,
+            showCount = running,
+        )
+        Spacer(Modifier.height(8.dp))
+        Text(breathsText(timer.rounds, "balloon"), style = MaterialTheme.typography.titleMedium)
+        Spacer(Modifier.weight(1f))
+        PaceSelector(pace, { pace = it; running = false }, color)
+        Spacer(Modifier.height(16.dp))
+        StartPauseRow(running, color, onToggle = { running = !running }, onReset = { running = false; timer.reset() })
+        Spacer(Modifier.height(8.dp))
+    }
+}

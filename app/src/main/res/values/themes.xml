@@ -1,0 +1,7 @@
+<resources>
+    <style name="Theme.CalmCorner" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/calm_background</item>
+    </style>
+    <color name="calm_background">#FFFAF7F2</color>
+    <color name="ic_launcher_background">#FFDCEFEA</color>
+</resources>
