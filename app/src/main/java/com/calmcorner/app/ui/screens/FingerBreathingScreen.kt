@@ -15,9 +15,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathMeasure
@@ -43,44 +41,105 @@ import kotlin.math.sin
 private val fingerNames = listOf("thumb", "pointer finger", "middle finger", "ring finger", "little finger")
 
 /**
- * Finger geometry as fractions of the canvas: left/right edges, tip and base
- * (before rotation), and a tilt in degrees around the base centre.
+ * Finger in unit coordinates (fractions of the canvas): centre x, tip y,
+ * half width, base y, and a tilt in degrees around the base centre.
+ * Geometry was checked visually with a browser mock-up before porting.
  */
-private data class FingerSpec(val left: Float, val right: Float, val tip: Float, val base: Float, val tilt: Float = 0f)
+private data class FingerSpec(val cx: Float, val tip: Float, val hw: Float, val base: Float, val tilt: Float = 0f)
 
 private val fingers = listOf(
-    FingerSpec(0.25f, 0.40f, 0.48f, 0.80f, tilt = -35f), // thumb, angled out
-    FingerSpec(0.27f, 0.41f, 0.10f, 0.56f, tilt = -4f),
-    FingerSpec(0.44f, 0.58f, 0.03f, 0.56f),
-    FingerSpec(0.61f, 0.75f, 0.09f, 0.56f, tilt = 3f),
-    FingerSpec(0.78f, 0.90f, 0.22f, 0.58f, tilt = 8f), // little finger
+    FingerSpec(0.27f, 0.43f, 0.070f, 0.75f, tilt = -34f), // thumb, angled out
+    FingerSpec(0.36f, 0.12f, 0.062f, 0.52f, tilt = -5f),
+    FingerSpec(0.50f, 0.05f, 0.064f, 0.50f),
+    FingerSpec(0.64f, 0.11f, 0.062f, 0.51f, tilt = 4f),
+    FingerSpec(0.775f, 0.25f, 0.055f, 0.55f, tilt = 10f), // little finger
 )
 
-/** Up one side, round the tip, down the other side. Half the length = breathe in. */
-private fun fingerPath(spec: FingerSpec, w: Float, h: Float): Path {
-    val l = spec.left * w
-    val r = spec.right * w
-    val base = spec.base * h
-    val rad = (r - l) / 2f
-    val cy = spec.tip * h + rad
-    val pivot = Offset((l + r) / 2f, base)
-    val a = Math.toRadians(spec.tilt.toDouble())
-    val c = cos(a).toFloat()
-    val s = sin(a).toFloat()
-    fun p(x: Float, y: Float): Offset {
-        val dx = x - pivot.x
-        val dy = y - pivot.y
-        return Offset(pivot.x + dx * c - dy * s, pivot.y + dx * s + dy * c)
+private const val ARC_K = 0.5523f // cubic control factor for a quarter circle
+
+/** Key points of one finger (unit coords, already tilted). */
+private class FingerPoints(spec: FingerSpec) {
+    private val a = Math.toRadians(spec.tilt.toDouble())
+    private val c = cos(a).toFloat()
+    private val s = sin(a).toFloat()
+    private fun p(x: Float, y: Float): Offset {
+        val dx = x - spec.cx
+        val dy = y - spec.base
+        return Offset(spec.cx + dx * c - dy * s, spec.base + dx * s + dy * c)
     }
-    val k = rad * 1.33f // cubic control distance for a near-perfect semicircle
-    return Path().apply {
-        p(l, base).let { moveTo(it.x, it.y) }
-        p(l, cy).let { lineTo(it.x, it.y) }
-        val c1 = p(l, cy - k)
-        val c2 = p(r, cy - k)
-        val e = p(r, cy)
-        cubicTo(c1.x, c1.y, c2.x, c2.y, e.x, e.y)
-        p(r, base).let { lineTo(it.x, it.y) }
+    private val l = spec.cx - spec.hw
+    private val r = spec.cx + spec.hw
+    private val cy = spec.tip + spec.hw
+    private val k = spec.hw * ARC_K
+    val leftBase = p(l, spec.base)
+    val leftTop = p(l, cy)
+    val c1 = p(l, cy - k)
+    val c2 = p(spec.cx - k, spec.tip)
+    val apex = p(spec.cx, spec.tip)
+    val c3 = p(spec.cx + k, spec.tip)
+    val c4 = p(r, cy - k)
+    val rightTop = p(r, cy)
+    val rightBase = p(r, spec.base)
+}
+
+/**
+ * The hand outline as 10 traced pieces: for each finger, "up" (breathe in)
+ * from the valley to the fingertip, then "down" (breathe out) to the next valley.
+ * Plus the closed hand silhouette for filling.
+ */
+private class HandGeometry(private val w: Float, private val h: Float) {
+    private fun Offset.px() = Offset(x * w, y * h)
+    private fun Path.moveTo(o: Offset) = o.px().let { moveTo(it.x, it.y) }
+    private fun Path.lineTo(o: Offset) = o.px().let { lineTo(it.x, it.y) }
+    private fun Path.quadTo(c: Offset, e: Offset) {
+        val a = c.px(); val b = e.px(); quadraticTo(a.x, a.y, b.x, b.y)
+    }
+    private fun Path.cubicTo(c1: Offset, c2: Offset, e: Offset) {
+        val a = c1.px(); val b = c2.px(); val d = e.px(); cubicTo(a.x, a.y, b.x, b.y, d.x, d.y)
+    }
+
+    private val pts = fingers.map { FingerPoints(it) }
+
+    /** Adds the "up" piece of finger i (without the initial moveTo). */
+    private fun Path.up(i: Int) {
+        val f = pts[i]
+        if (i > 0) {
+            val a = pts[i - 1].rightBase
+            val b = f.leftBase
+            quadTo(Offset((a.x + b.x) / 2f, maxOf(a.y, b.y) + 0.02f), b)
+        }
+        lineTo(f.leftTop)
+        cubicTo(f.c1, f.c2, f.apex)
+    }
+
+    /** Adds the "down" piece of finger i (without the initial moveTo). */
+    private fun Path.down(i: Int) {
+        val f = pts[i]
+        cubicTo(f.c3, f.c4, f.rightTop)
+        lineTo(f.rightBase)
+    }
+
+    val pieces: List<Path> = (0 until 10).map { n ->
+        val i = n / 2
+        Path().apply {
+            if (n % 2 == 0) {
+                moveTo(if (i == 0) pts[0].leftBase else pts[i - 1].rightBase)
+                up(i)
+            } else {
+                moveTo(pts[i].apex)
+                down(i)
+            }
+        }
+    }
+
+    val silhouette: Path = Path().apply {
+        moveTo(pts[0].leftBase)
+        for (i in 0 until 5) { up(i); down(i) }
+        quadTo(Offset(0.87f, 0.62f), Offset(0.86f, 0.78f))
+        quadTo(Offset(0.85f, 0.97f), Offset(0.66f, 0.97f))
+        lineTo(Offset(0.40f, 0.97f))
+        quadTo(Offset(0.24f, 0.97f), Offset(0.22f, 0.84f))
+        close()
     }
 }
 
@@ -111,44 +170,31 @@ fun FingerBreathingScreen(onBack: () -> Unit) {
     ) {
         Spacer(Modifier.weight(1f))
         Canvas(Modifier.fillMaxWidth(0.82f).aspectRatio(0.9f).tapToToggle { running = !running }) {
-            val w = size.width
-            val h = size.height
-            val outlineW = 4.dp.toPx()
+            val outlineW = 8.dp.toPx()
             val traceW = 9.dp.toPx()
-            // Opaque colours so overlapping shapes don't look darker.
-            val fill = tool.color.copy(alpha = 0.22f).compositeOver(bg)
-            val doneFill = tool.color.copy(alpha = 0.55f).compositeOver(bg)
-            val outline = tool.color.copy(alpha = 0.75f).compositeOver(bg)
+            val hand = HandGeometry(size.width, size.height)
+            val fill = tool.color.copy(alpha = 0.25f).compositeOver(bg)
+            val outline = tool.color.copy(alpha = 0.80f).compositeOver(bg)
+            val line = Stroke(traceW, cap = StrokeCap.Round, join = StrokeJoin.Round)
 
-            val palm = Path().apply {
-                addRoundRect(RoundRect(0.22f * w, 0.50f * h, 0.92f * w, 0.97f * h, CornerRadius(0.13f * w)))
-            }
-            val paths = fingers.map { fingerPath(it, w, h) }
-            val all = paths + palm
+            drawPath(hand.silhouette, fill)
+            drawPath(hand.silhouette, outline, style = Stroke(outlineW, join = StrokeJoin.Round))
 
-            // Outline trick: draw thick strokes first, then fills on top -> one clean hand silhouette.
-            all.forEach { drawPath(it, outline, style = Stroke(outlineW * 2, cap = StrokeCap.Round, join = StrokeJoin.Round)) }
-            all.forEach { drawPath(it, fill) }
-            paths.forEachIndexed { i, path -> if (i < fingerIndex) drawPath(path, doneFill) }
+            val current = timer.phaseIndex
+            // Everything already traced stays dark, so she can see how far she's come.
+            hand.pieces.forEachIndexed { i, piece -> if (i < current) drawPath(piece, tool.deep, style = line) }
 
+            val measure = PathMeasure().apply { setPath(hand.pieces[current], false) }
+            val dist = if (started) timer.progress * measure.length else 0f
             if (started) {
-                val path = paths[fingerIndex]
-                val measure = PathMeasure().apply { setPath(path, false) }
-                val half = measure.length / 2f
-                val dist = if (breathingIn) timer.progress * half else half + timer.progress * half
                 val traced = Path()
                 measure.getSegment(0f, dist, traced, true)
-                drawPath(traced, tool.deep, style = Stroke(traceW, cap = StrokeCap.Round, join = StrokeJoin.Round))
-                val dot = measure.getPosition(dist)
-                drawCircle(tool.deep.copy(alpha = 0.25f), radius = traceW * 2.4f, center = dot)
-                drawCircle(tool.deep, radius = traceW * 1.35f, center = dot)
-                drawCircle(Color.White, radius = traceW * 0.5f, center = dot)
-            } else {
-                // Show where to begin: a dot at the bottom of the thumb.
-                val start = PathMeasure().apply { setPath(paths[0], false) }.getPosition(0f)
-                drawCircle(tool.deep, radius = traceW * 1.35f, center = start)
-                drawCircle(Color.White, radius = traceW * 0.5f, center = start)
+                drawPath(traced, tool.deep, style = line)
             }
+            val dot = measure.getPosition(dist)
+            drawCircle(tool.deep.copy(alpha = 0.25f), radius = traceW * 2.4f, center = dot)
+            drawCircle(tool.deep, radius = traceW * 1.35f, center = dot)
+            drawCircle(Color.White, radius = traceW * 0.5f, center = dot)
         }
         Spacer(Modifier.height(16.dp))
         Text(

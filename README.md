@@ -9,14 +9,14 @@ A simple, calm Android app with tools that help kids and young people regulate b
 | Tool | What it does |
 |---|---|
 | 🟦 **Box Breathing** | A dot travels around a square: in, hold, out, hold. |
-| 🖐️ **Five Finger Breathing** | A drawn hand. The child traces up each finger breathing in and down breathing out, following the dot. |
-| 🎈 **Balloon Breathing** | Belly breathing with a balloon that inflates and deflates. The out-breath is longer than the in-breath. |
-| 👀 **5-4-3-2-1 Senses** | Grounding. Tap a circle for each thing you see, touch, hear, smell and taste. |
-| 💪 **Squeeze & Relax** | Muscle relaxation for kids: fists like squeezing a lemon, turtle shoulders, elephant tummy and more. |
+| 🖐️ **Finger Breathing** | A dot traces the outline of a hand: up a finger to breathe in, down to breathe out. |
+| 🎈 **Balloon Breathing** | Belly breathing with a balloon that inflates and deflates. The child picks the balloon colour (remembered). The out-breath is longer than the in-breath. |
+| 👀 **Five Senses** | Grounding. Tap a circle for each thing you see, touch, hear, smell and taste. |
+| 💪 **Squeeze and Relax** | Muscle relaxation. A drawn body lights up the part to squeeze (hands, arms, shoulders, face, tummy, feet) and shows it tense, then relaxed. |
 
 Other features:
-- **Feelings check-in** on the home screen (Angry, Worried, Sad, Too much, Wiggly, Calm). It suggests the tools that suit that feeling.
-- **Speed selector** (Quick 3s / Steady 4s / Slow 5s). Younger children often find 4 seconds too long.
+- **Colour check-in** on the home screen: Blue (sad, tired), Green (calm, ready), Yellow (worried, wiggly), Red (very angry or scared). It suggests tools for that state. The app deliberately avoids trademarked programme names.
+- **Speed selector** (🐇 Fast 3s / 🚶 Medium 4s / 🐢 Slow 5s). Younger children often find 4 seconds too long.
 - **Gentle vibration** at each phase change, so a child can follow along with eyes closed.
 - The screen stays on during an exercise. Light and dark themes.
 - **No internet permission, no accounts, no ads, no tracking.** This makes the Play Store "Designed for Families" review much simpler.

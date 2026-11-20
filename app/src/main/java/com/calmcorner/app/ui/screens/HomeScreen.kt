@@ -1,11 +1,11 @@
 package com.calmcorner.app.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -21,25 +21,26 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.calmcorner.app.data.Feeling
+import com.calmcorner.app.data.Zone
 import com.calmcorner.app.data.Tool
 
 @Composable
 fun HomeScreen(
-    feeling: Feeling?,
-    onFeelingChange: (Feeling?) -> Unit,
+    zone: Zone?,
+    onZoneChange: (Zone?) -> Unit,
     onOpenTool: (Tool) -> Unit,
 ) {
-    val suggested = feeling?.suggestions.orEmpty()
+    val suggested = zone?.suggestions.orEmpty()
     val others = Tool.entries.filterNot { it in suggested }
 
     LazyColumn(
@@ -56,29 +57,28 @@ fun HomeScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.height(20.dp))
-            Text("How do you feel?", style = MaterialTheme.typography.titleLarge)
-            Spacer(Modifier.height(8.dp))
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Feeling.entries.forEach { f ->
-                    FilterChip(
-                        selected = f == feeling,
-                        onClick = { onFeelingChange(if (f == feeling) null else f) },
-                        label = { Text("${f.emoji}  ${f.label}", style = MaterialTheme.typography.bodyLarge) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                        ),
-                    )
+            Text("What colour are you?", style = MaterialTheme.typography.titleLarge)
+            Spacer(Modifier.height(10.dp))
+            Zone.entries.chunked(2).forEach { row ->
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.padding(bottom = 10.dp)) {
+                    row.forEach { z ->
+                        ZoneTile(
+                            zone = z,
+                            selected = z == zone,
+                            onClick = { onZoneChange(if (z == zone) null else z) },
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
                 }
             }
-            AnimatedVisibility(visible = feeling != null) {
+            AnimatedVisibility(visible = zone != null) {
                 Card(
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
-                    modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+                    colors = CardDefaults.cardColors(containerColor = (zone?.color ?: Color.Transparent).copy(alpha = 0.18f)),
+                    modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
                 ) {
                     Text(
-                        feeling?.message.orEmpty(),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        zone?.message.orEmpty(),
+                        style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier.padding(16.dp),
                     )
                 }
@@ -99,6 +99,33 @@ fun HomeScreen(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+        }
+    }
+}
+
+@Composable
+private fun ZoneTile(zone: Zone, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Card(
+        onClick = onClick,
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = zone.color.copy(alpha = if (selected) 0.40f else 0.16f),
+            contentColor = MaterialTheme.colorScheme.onSurface,
+        ),
+        border = if (selected) BorderStroke(3.dp, zone.color) else null,
+        modifier = modifier.semantics { this.selected = selected },
+    ) {
+        Column(Modifier.padding(horizontal = 12.dp, vertical = 12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.size(40.dp).background(zone.color, CircleShape),
+                ) { Text(zone.emoji, fontSize = 22.sp) }
+                Spacer(Modifier.width(10.dp))
+                Text(zone.label, style = MaterialTheme.typography.titleLarge)
+            }
+            Spacer(Modifier.height(6.dp))
+            Text(zone.words, style = MaterialTheme.typography.bodyMedium)
         }
     }
 }

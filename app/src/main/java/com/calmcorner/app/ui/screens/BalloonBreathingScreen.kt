@@ -23,7 +23,20 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import com.calmcorner.app.data.Tool
+import com.calmcorner.app.data.rememberIntPref
 import com.calmcorner.app.ui.components.BreathingControls
 import com.calmcorner.app.ui.components.KeepScreenOn
 import com.calmcorner.app.ui.components.PhaseKind
@@ -35,10 +48,21 @@ import com.calmcorner.app.ui.components.rememberPhaseBuzz
 import com.calmcorner.app.ui.components.rememberPhaseTimer
 import com.calmcorner.app.ui.components.tapToToggle
 
+private val balloonColors = listOf(
+    "Pink" to Color(0xFFE57B8D),
+    "Red" to Color(0xFFE5534B),
+    "Orange" to Color(0xFFF0954A),
+    "Yellow" to Color(0xFFF2C94C),
+    "Green" to Color(0xFF5DB37E),
+    "Blue" to Color(0xFF5B9BE0),
+    "Purple" to Color(0xFF9C7BD6),
+)
+
 @Composable
 fun BalloonBreathingScreen(onBack: () -> Unit) {
     val tool = Tool.BalloonBreathing
-    val color = tool.color
+    var colorIndex by rememberIntPref("balloon_color", 0)
+    val color = balloonColors.getOrElse(colorIndex) { balloonColors[0] }.second
     var pace by rememberSaveable { mutableIntStateOf(4) }
     var running by rememberSaveable { mutableStateOf(false) }
     // Longer out-breath than in-breath helps the body settle.
@@ -117,6 +141,23 @@ fun BalloonBreathingScreen(onBack: () -> Unit) {
         Spacer(Modifier.height(8.dp))
         Text(doneText(timer.rounds, "balloon"), style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.weight(1f))
+        if (!running) {
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                balloonColors.forEachIndexed { i, (name, c) ->
+                    val chosen = i == colorIndex
+                    Box(
+                        Modifier
+                            .size(if (chosen) 40.dp else 34.dp)
+                            .border(if (chosen) 3.dp else 0.dp, MaterialTheme.colorScheme.onSurface, CircleShape)
+                            .padding(if (chosen) 5.dp else 0.dp)
+                            .background(c, CircleShape)
+                            .semantics { contentDescription = "$name balloon"; selected = chosen }
+                            .clickable(role = Role.RadioButton) { colorIndex = i },
+                    )
+                }
+            }
+            Spacer(Modifier.height(16.dp))
+        }
         BreathingControls(
             pace = pace, onPace = { pace = it; running = false },
             running = running, started = started, color = tool.color, deep = tool.deep,

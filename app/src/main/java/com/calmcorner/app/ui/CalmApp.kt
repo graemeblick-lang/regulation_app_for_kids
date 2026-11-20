@@ -16,7 +16,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import com.calmcorner.app.data.Feeling
+import com.calmcorner.app.data.Zone
 import com.calmcorner.app.data.Tool
 import com.calmcorner.app.ui.screens.BalloonBreathingScreen
 import com.calmcorner.app.ui.screens.BoxBreathingScreen
@@ -29,7 +29,7 @@ import com.calmcorner.app.ui.screens.SqueezeRelaxScreen
 fun CalmApp() {
     // Stored as names so they survive rotation / process death.
     var toolName by rememberSaveable { mutableStateOf<String?>(null) }
-    var feelingName by rememberSaveable { mutableStateOf<String?>(null) }
+    var zoneName by rememberSaveable { mutableStateOf<String?>(null) }
     val tool = toolName?.let { Tool.valueOf(it) }
     val goHome = { toolName = null }
 
@@ -44,8 +44,8 @@ fun CalmApp() {
             ) { current ->
                 when (current) {
                     null -> HomeScreen(
-                        feeling = feelingName?.let { Feeling.valueOf(it) },
-                        onFeelingChange = { feelingName = it?.name },
+                        zone = zoneName?.let { Zone.valueOf(it) },
+                        onZoneChange = { zoneName = it?.name },
                         onOpenTool = { toolName = it.name },
                     )
                     Tool.BoxBreathing -> BoxBreathingScreen(goHome)

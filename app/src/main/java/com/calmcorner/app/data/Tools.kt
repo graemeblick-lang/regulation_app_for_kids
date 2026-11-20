@@ -21,16 +21,24 @@ enum class Tool(
     SqueezeRelax("Squeeze and Relax", "Squeeze tight, then let go", "💪", CalmColors.Lavender, CalmColors.LavenderDeep),
 }
 
-enum class Feeling(
+/**
+ * Four colour states for checking in (a common way schools teach regulation).
+ * We deliberately don't use any trademarked programme name in the app.
+ */
+enum class Zone(
     val label: String,
     val emoji: String,
+    val words: String,
     val message: String,
+    val color: Color,
     val suggestions: List<Tool>,
 ) {
-    Angry("Angry", "😠", "It's OK to feel angry. Let's cool down.", listOf(Tool.SqueezeRelax, Tool.BoxBreathing)),
-    Worried("Worried", "😟", "Let's help your body feel safe.", listOf(Tool.FingerBreathing, Tool.Grounding)),
-    Sad("Sad", "😢", "It's OK to feel sad. Be kind to you.", listOf(Tool.BalloonBreathing, Tool.FingerBreathing)),
-    Overwhelmed("Too much", "🤯", "Let's slow down together.", listOf(Tool.Grounding, Tool.BoxBreathing)),
-    Wiggly("Wiggly", "🌀", "Let's use up that energy.", listOf(Tool.SqueezeRelax, Tool.BalloonBreathing)),
-    Calm("Calm", "😌", "Great! Practise while you feel calm.", listOf(Tool.BoxBreathing, Tool.FingerBreathing)),
+    Blue("Blue", "😔", "Sad, tired, slow", "Feeling low? Let's wake up your body.",
+        Color(0xFF4A7FC1), listOf(Tool.SqueezeRelax, Tool.BalloonBreathing)),
+    Green("Green", "🙂", "Calm, happy, ready", "You're ready! Practise a tool.",
+        Color(0xFF4F9D5D), listOf(Tool.BoxBreathing, Tool.FingerBreathing)),
+    Yellow("Yellow", "😬", "Worried, wiggly, silly", "Let's slow down.",
+        Color(0xFFE7B416), listOf(Tool.FingerBreathing, Tool.Grounding, Tool.BoxBreathing)),
+    Red("Red", "😡", "Very angry or scared", "Stop. Breathe. You are safe.",
+        Color(0xFFD9534F), listOf(Tool.SqueezeRelax, Tool.BoxBreathing)),
 }
