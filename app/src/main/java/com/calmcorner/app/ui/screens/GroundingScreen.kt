@@ -26,14 +26,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.LaunchedEffect
 import com.calmcorner.app.data.Tool
+import com.calmcorner.app.ui.components.rememberCues
 
 private data class SenseStep(val count: Int, val emoji: String, val sense: String, val hint: String)
 
@@ -46,12 +46,15 @@ private val senseSteps = listOf(
 )
 
 @Composable
-fun GroundingScreen(onBack: () -> Unit) {
+fun GroundingScreen(onBack: () -> Unit, onFinish: () -> Unit) {
     val tool = Tool.Grounding
     val color = tool.color
     var step by rememberSaveable { mutableIntStateOf(0) }
     var found by rememberSaveable { mutableIntStateOf(0) }
-    val haptic = LocalHapticFeedback.current
+    val cues = rememberCues()
+    LaunchedEffect(step) {
+        senseSteps.getOrNull(step)?.let { cues.say("Find ${it.count} ${if (it.count == 1) "thing" else "things"} you can ${it.sense}") }
+    }
 
     com.calmcorner.app.ui.components.ToolScaffold(
         title = tool.title,
@@ -108,7 +111,7 @@ fun GroundingScreen(onBack: () -> Unit) {
                                     .clickable {
                                         if (i == found && found < item.count) {
                                             found++
-                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            cues.buzz()
                                         } else if (i == found - 1) {
                                             found-- // let kids undo a mis-tap
                                         }
@@ -125,10 +128,13 @@ fun GroundingScreen(onBack: () -> Unit) {
         val done = step >= senseSteps.size
         Button(
             onClick = {
-                if (done) onBack()
+                if (done) onFinish()
                 else if (current != null && found < current.count) {
                     found++
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    cues.buzz()
+                } else if (step == senseSteps.lastIndex) {
+                    cues.say("All done")
+                    onFinish()
                 } else { step++; found = 0 }
             },
             colors = ButtonDefaults.buttonColors(containerColor = tool.deep, contentColor = Color.White),

@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Calm Corner</string>
+    <string name="widget_label">Calm now</string>
+    <string name="widget_description">One tap to start your favourite calming tool.</string>
 </resources>

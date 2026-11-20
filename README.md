@@ -4,22 +4,29 @@ A simple, calm Android app with tools that help kids and young people regulate b
 
 **Working name.** "Calm Corner" is a placeholder. Check the Play Store for clashes before you settle on a name.
 
-## What's in the prototype
+## What's in the app
+
+**Check-in loop:** pick a colour (Blue, Green, Yellow or Red), get suggested tools, do one, then answer **"How do you feel now?"**. Every finished tool earns a ⭐ for effort. If she isn't calm yet, it suggests another tool (and on Red, talking to a grown-up).
 
 | Tool | What it does |
 |---|---|
 | 🟦 **Box Breathing** | A dot travels around a square: in, hold, out, hold. |
 | 🖐️ **Finger Breathing** | A dot traces the outline of a hand: up a finger to breathe in, down to breathe out. |
-| 🎈 **Balloon Breathing** | Belly breathing with a balloon that inflates and deflates. The child picks the balloon colour (remembered). The out-breath is longer than the in-breath. |
+| 🎈 **Balloon Breathing** | A balloon inflates and deflates. She picks its colour. The out-breath is longer than the in-breath. |
 | 👀 **Five Senses** | Grounding. Tap a circle for each thing you see, touch, hear, smell and taste. |
-| 💪 **Squeeze and Relax** | Muscle relaxation. A drawn body lights up the part to squeeze (hands, arms, shoulders, tummy, feet) and shows it tense, then relaxed. The face step zooms in on a big face to copy. |
+| 💪 **Squeeze and Relax** | A drawn body lights up each part to squeeze, then relax. The face step zooms in on a big face to copy. |
+| ✨ **Calm Jar** | Shake the phone (or tap Shake) and watch glitter slowly settle. |
+| 🔵 **Bubble Pop** | A grid of bubbles to pop slowly, like a pop-it toy. |
+| ⏳ **Calm Timer** | 1, 2 or 5 minutes of quiet rest with a slowly pulsing circle. |
 
-Other features:
-- **Colour check-in** on the home screen: Blue (sad, tired), Green (calm, ready), Yellow (worried, wiggly), Red (very angry or scared). It suggests tools for that state. The app deliberately avoids trademarked programme names.
-- **Speed selector** (🐇 Fast 3s / 🚶 Medium 4s / 🐢 Slow 5s). Younger children often find 4 seconds too long.
-- **Gentle vibration** at each phase change, so a child can follow along with eyes closed.
-- The screen stays on during an exercise. Light and dark themes.
-- **No internet permission, no accounts, no ads, no tracking.** This makes the Play Store "Designed for Families" review much simpler.
+**Also:**
+- **Voice guidance** with the phone's built-in, offline text-to-speech. There's a 🔊/🔇 button on every exercise, and her choice is remembered (e.g. quiet on the bus).
+- Gentle **vibration** at each step (can be turned off).
+- **Remembers** her breathing speed for each tool, her balloon colour and her timer length.
+- **Breaths per session** (3, 5, 10 or keep going), ending with "All done ⭐".
+- **Home-screen widget** ("Calm now"): one tap opens her most-used tool.
+- **Grown-ups area**: press and hold ⚙️ on the home screen for 3 seconds. It shows this week's summary (exercises, how often she felt calmer afterwards, most helpful tool) and recent history with before/after colours. Settings: voice, vibration, breaths per session, theme (match phone, light or dark), show or hide tools, clear history.
+- **No internet permission, no accounts, no ads, no tracking.** All history stays on the phone.
 
 ## Wording rules
 
@@ -45,6 +52,9 @@ Other features:
 > Builds made before 20 Nov 2026 (evening) were signed with a random key. If you have one of those installed, **uninstall it once** before installing a newer build. From then on, updates install over the top.
 
 A new build is published automatically on every push (see the **Releases** section of the repo page).
+
+### Running the tests
+`./gradlew testDebugUnitTest` (also runs on every push).
 
 ### Option B: Android Studio (to make changes)
 1. Install [Android Studio](https://developer.android.com/studio).

@@ -36,7 +36,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import com.calmcorner.app.data.Tool
-import com.calmcorner.app.data.rememberIntPref
 import com.calmcorner.app.ui.components.BreathingControls
 import com.calmcorner.app.ui.components.KeepScreenOn
 import com.calmcorner.app.ui.components.PhaseKind
@@ -44,7 +43,9 @@ import com.calmcorner.app.ui.components.PhaseLabel
 import com.calmcorner.app.ui.components.TimedPhase
 import com.calmcorner.app.ui.components.ToolScaffold
 import com.calmcorner.app.ui.components.doneText
-import com.calmcorner.app.ui.components.rememberPhaseBuzz
+import androidx.compose.runtime.LaunchedEffect
+import com.calmcorner.app.data.LocalPrefs
+import com.calmcorner.app.ui.components.rememberCues
 import com.calmcorner.app.ui.components.rememberPhaseTimer
 import com.calmcorner.app.ui.components.tapToToggle
 
@@ -59,11 +60,13 @@ private val balloonColors = listOf(
 )
 
 @Composable
-fun BalloonBreathingScreen(onBack: () -> Unit) {
+fun BalloonBreathingScreen(onBack: () -> Unit, onFinish: () -> Unit) {
     val tool = Tool.BalloonBreathing
-    var colorIndex by rememberIntPref("balloon_color", 0)
-    val color = balloonColors.getOrElse(colorIndex) { balloonColors[0] }.second
-    var pace by rememberSaveable { mutableIntStateOf(4) }
+    val prefs = LocalPrefs.current
+    val color = balloonColors.getOrElse(prefs.balloonColor) { balloonColors[0] }.second
+    val cues = rememberCues()
+    var pace by rememberSaveable { mutableIntStateOf(prefs.speedFor(tool)) }
+    val target = prefs.breathsPerSession
     var running by rememberSaveable { mutableStateOf(false) }
     // Longer out-breath than in-breath helps the body settle.
     val phases = remember(pace) {
@@ -73,9 +76,12 @@ fun BalloonBreathingScreen(onBack: () -> Unit) {
             TimedPhase("Breathe out", pace + 2f, PhaseKind.BreatheOut),
         )
     }
-    val timer = rememberPhaseTimer(phases, running, onPhaseStart = rememberPhaseBuzz())
+    val timer = rememberPhaseTimer(phases, running, maxRounds = target, onPhaseStart = cues::phase)
     val started = running || timer.progress > 0f || timer.phaseIndex > 0 || timer.rounds > 0
     KeepScreenOn()
+    LaunchedEffect(timer.finished) {
+        if (timer.finished) { cues.say("All done"); onFinish() }
+    }
 
     val eased = FastOutSlowInEasing.transform(timer.progress)
     val fullness = when (timer.phase.kind) {
@@ -139,12 +145,12 @@ fun BalloonBreathingScreen(onBack: () -> Unit) {
             showCount = running,
         )
         Spacer(Modifier.height(8.dp))
-        Text(doneText(timer.rounds, "balloon"), style = MaterialTheme.typography.titleMedium)
+        Text(doneText(timer.rounds, "balloon", target), style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.weight(1f))
         if (!running) {
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 balloonColors.forEachIndexed { i, (name, c) ->
-                    val chosen = i == colorIndex
+                    val chosen = i == prefs.balloonColor
                     Box(
                         Modifier
                             .size(if (chosen) 40.dp else 34.dp)
@@ -152,16 +158,16 @@ fun BalloonBreathingScreen(onBack: () -> Unit) {
                             .padding(if (chosen) 5.dp else 0.dp)
                             .background(c, CircleShape)
                             .semantics { contentDescription = "$name balloon"; selected = chosen }
-                            .clickable(role = Role.RadioButton) { colorIndex = i },
+                            .clickable(role = Role.RadioButton) { prefs.updateBalloonColor(i) },
                     )
                 }
             }
             Spacer(Modifier.height(16.dp))
         }
         BreathingControls(
-            pace = pace, onPace = { pace = it; running = false },
+            pace = pace, onPace = { pace = it; prefs.saveSpeed(tool, it); running = false },
             running = running, started = started, color = tool.color, deep = tool.deep,
-            onToggle = { running = !running }, onReset = { running = false; timer.reset() },
+            onToggle = { running = !running }, onDone = { running = false; onFinish() },
         )
     }
 }

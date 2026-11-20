@@ -19,6 +19,9 @@ enum class Tool(
     BalloonBreathing("Balloon Breathing", "Breathe deep into your tummy", "🎈", CalmColors.Rose, CalmColors.RoseDeep),
     Grounding("Five Senses", "Look, touch, listen", "👀", CalmColors.Leaf, CalmColors.LeafDeep),
     SqueezeRelax("Squeeze and Relax", "Squeeze tight, then relax", "💪", CalmColors.Lavender, CalmColors.LavenderDeep),
+    CalmJar("Calm Jar", "Shake it. Watch the glitter fall", "✨", CalmColors.Gold, CalmColors.GoldDeep),
+    BubblePop("Bubble Pop", "Tap the bubbles to pop them", "🔵", CalmColors.Aqua, CalmColors.AquaDeep),
+    CalmTimer("Calm Timer", "Rest quietly for a few minutes", "⏳", CalmColors.Slate, CalmColors.SlateDeep),
 }
 
 /**
@@ -34,11 +37,11 @@ enum class Zone(
     val suggestions: List<Tool>,
 ) {
     Blue("Blue", "😔", "Sad, tired, slow", "Sad or tired? These can help.",
-        Color(0xFF4A7FC1), listOf(Tool.SqueezeRelax, Tool.BalloonBreathing)),
+        Color(0xFF4A7FC1), listOf(Tool.SqueezeRelax, Tool.BubblePop, Tool.BalloonBreathing)),
     Green("Green", "🙂", "Calm, happy, ready", "You feel calm. Practise a tool now.",
         Color(0xFF4F9D5D), listOf(Tool.BoxBreathing, Tool.FingerBreathing)),
     Yellow("Yellow", "😬", "Worried, wiggly, silly", "These can help you feel calm.",
-        Color(0xFFE7B416), listOf(Tool.FingerBreathing, Tool.Grounding, Tool.BoxBreathing)),
+        Color(0xFFE7B416), listOf(Tool.FingerBreathing, Tool.Grounding, Tool.BubblePop)),
     Red("Red", "😡", "Very angry or scared", "Stop. Breathe. You are safe.",
-        Color(0xFFD9534F), listOf(Tool.SqueezeRelax, Tool.BoxBreathing)),
+        Color(0xFFD9534F), listOf(Tool.SqueezeRelax, Tool.BoxBreathing, Tool.CalmJar)),
 }

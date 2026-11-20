@@ -20,6 +20,8 @@ data class TimedPhase(
     val label: String,
     val seconds: Float,
     val kind: PhaseKind,
+    /** What the voice says at the start of this phase (defaults to [label]). No emoji. */
+    val spoken: String? = null,
 )
 
 /** Shared, frame-accurate timer that steps through a list of phases. */
@@ -54,12 +56,14 @@ fun rememberPhaseTimer(
     phases: List<TimedPhase>,
     running: Boolean,
     loop: Boolean = true,
+    /** Stop after this many full rounds (0 = no limit). */
+    maxRounds: Int = 0,
     onPhaseStart: (TimedPhase) -> Unit = {},
 ): PhaseTimerState {
     val state = remember(phases) { PhaseTimerState(phases) }
     val latestOnPhaseStart by rememberUpdatedState(onPhaseStart)
 
-    LaunchedEffect(state, running) {
+    LaunchedEffect(state, running, maxRounds) {
         if (!running || state.finished) return@LaunchedEffect
         if (state.progress == 0f) latestOnPhaseStart(state.phase)
         var last = withFrameNanos { it }
@@ -73,7 +77,7 @@ fun rememberPhaseTimer(
                 val next = state.phaseIndex + 1
                 if (next >= state.phases.size) {
                     state.rounds++
-                    if (!loop) {
+                    if (!loop || (maxRounds > 0 && state.rounds >= maxRounds)) {
                         state.progress = 1f
                         state.finished = true
                         break

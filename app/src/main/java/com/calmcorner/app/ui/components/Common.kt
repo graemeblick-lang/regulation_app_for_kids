@@ -42,12 +42,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
+import com.calmcorner.app.data.LocalPrefs
+import com.calmcorner.app.data.Zone
 
 /**
  * Standard layout for every tool: back arrow, title, one short tip, and an
@@ -74,6 +82,7 @@ fun ToolScaffold(
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
             }
             Text(title, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+            SoundToggle()
             AnimatedVisibility(visible = showTip, enter = fadeIn(), exit = fadeOut()) {
                 TextButton(onClick = { showHow = !showHow }) {
                     Text(if (showHow) "Close" else "How? ❓", color = color, style = MaterialTheme.typography.titleMedium)
@@ -132,13 +141,6 @@ fun KeepScreenOn() {
     }
 }
 
-/** Gentle buzz at each phase change so kids can follow with eyes closed. */
-@Composable
-fun rememberPhaseBuzz(): (TimedPhase) -> Unit {
-    val haptic = LocalHapticFeedback.current
-    return { haptic.performHapticFeedback(HapticFeedbackType.LongPress) }
-}
-
 /** Speed picker with picture cues for kids who find reading hard. */
 @Composable
 fun PaceSelector(seconds: Int, onChange: (Int) -> Unit, color: Color) {
@@ -154,14 +156,14 @@ fun PaceSelector(seconds: Int, onChange: (Int) -> Unit, color: Color) {
     }
 }
 
-/** Big Start/Pause button. Restart only appears once something has started. */
+/** Big Start/Pause button. When paused part-way, "Done" finishes the exercise. */
 @Composable
 fun StartPauseRow(
     running: Boolean,
     started: Boolean,
     deep: Color,
     onToggle: () -> Unit,
-    onReset: () -> Unit,
+    onDone: () -> Unit,
 ) {
     Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
         Button(
@@ -181,11 +183,29 @@ fun StartPauseRow(
         AnimatedVisibility(visible = started && !running) {
             Row {
                 Spacer(Modifier.width(12.dp))
-                OutlinedButton(onClick = onReset, modifier = Modifier.height(60.dp)) {
-                    Text("↺ Restart", style = MaterialTheme.typography.bodyMedium)
+                OutlinedButton(onClick = onDone, modifier = Modifier.height(60.dp)) {
+                    Text("✓ Done", style = MaterialTheme.typography.labelLarge, color = deep)
                 }
             }
         }
+    }
+}
+
+/** 🔊 / 🔇 quick switch for voice guidance (e.g. on the bus). Remembered. */
+@Composable
+fun SoundToggle() {
+    val prefs = LocalPrefs.current
+    val voice = LocalVoice.current
+    IconButton(onClick = {
+        val on = !prefs.voiceOn
+        prefs.updateVoice(on)
+        if (!on) voice?.stop()
+    }) {
+        Text(
+            if (prefs.voiceOn) "🔊" else "🔇",
+            fontSize = 24.sp,
+            modifier = Modifier.semantics { contentDescription = if (prefs.voiceOn) "Sound is on. Tap to turn off." else "Sound is off. Tap to turn on." },
+        )
     }
 }
 
@@ -210,7 +230,7 @@ fun BreathingControls(
     color: Color,
     deep: Color,
     onToggle: () -> Unit,
-    onReset: () -> Unit,
+    onDone: () -> Unit,
 ) {
     AnimatedVisibility(visible = !running) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -218,9 +238,55 @@ fun BreathingControls(
             Spacer(Modifier.height(16.dp))
         }
     }
-    StartPauseRow(running, started, deep, onToggle, onReset)
+    StartPauseRow(running, started, deep, onToggle, onDone)
     Spacer(Modifier.height(8.dp))
 }
 
-fun doneText(rounds: Int, noun: String): String =
-    if (rounds == 0) " " else "⭐ $rounds $noun${if (rounds == 1) "" else "s"}"
+/** "⭐ 2 of 5" when there is a target, or "⭐ 2 boxes" when she keeps going. */
+fun doneText(rounds: Int, noun: String, target: Int = 0): String = when {
+    target > 0 -> "⭐ $rounds of $target"
+    rounds == 0 -> " "
+    else -> "⭐ $rounds $noun${if (rounds == 1) "" else "s"}"
+}
+
+/** One of the four colour check-in tiles (used on Home and after each tool). */
+@Composable
+fun ZoneTile(zone: Zone, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Card(
+        onClick = onClick,
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = zone.color.copy(alpha = if (selected) 0.40f else 0.16f),
+            contentColor = MaterialTheme.colorScheme.onSurface,
+        ),
+        border = if (selected) BorderStroke(3.dp, zone.color) else null,
+        modifier = modifier.semantics { this.selected = selected },
+    ) {
+        Column(Modifier.padding(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.size(40.dp).background(zone.color, CircleShape),
+                ) { Text(zone.emoji, fontSize = 22.sp) }
+                Spacer(Modifier.width(10.dp))
+                Text(zone.label, style = MaterialTheme.typography.titleLarge)
+            }
+            Spacer(Modifier.height(6.dp))
+            Text(zone.words, style = MaterialTheme.typography.bodyMedium)
+        }
+    }
+}
+
+/** The four colour tiles in a 2 x 2 grid. */
+@Composable
+fun ZoneGrid(selected: Zone?, onPick: (Zone) -> Unit) {
+    Column {
+        Zone.entries.chunked(2).forEach { row ->
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.padding(bottom = 10.dp)) {
+                row.forEach { z ->
+                    ZoneTile(z, z == selected, onClick = { onPick(z) }, modifier = Modifier.weight(1f))
+                }
+            }
+        }
+    }
+}

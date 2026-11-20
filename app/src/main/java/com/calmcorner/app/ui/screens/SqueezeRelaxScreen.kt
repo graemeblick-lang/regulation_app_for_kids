@@ -41,7 +41,8 @@ import com.calmcorner.app.ui.components.PhaseKind
 import com.calmcorner.app.ui.components.StartPauseRow
 import com.calmcorner.app.ui.components.TimedPhase
 import com.calmcorner.app.ui.components.ToolScaffold
-import com.calmcorner.app.ui.components.rememberPhaseBuzz
+import androidx.compose.runtime.LaunchedEffect
+import com.calmcorner.app.ui.components.rememberCues
 import com.calmcorner.app.ui.components.rememberPhaseTimer
 import com.calmcorner.app.ui.components.tapToToggle
 import kotlin.math.PI
@@ -60,18 +61,22 @@ enum class BodyPart(val squeeze: String, val relax: String) {
 
 private val squeezePhases = BodyPart.entries.flatMap {
     listOf(
-        TimedPhase("Squeeze", 5f, PhaseKind.Squeeze),
-        TimedPhase("Relax", 8f, PhaseKind.Relax),
+        TimedPhase("Squeeze", 5f, PhaseKind.Squeeze, spoken = it.squeeze),
+        TimedPhase("Relax", 8f, PhaseKind.Relax, spoken = it.relax),
     )
 }
 
 @Composable
-fun SqueezeRelaxScreen(onBack: () -> Unit) {
+fun SqueezeRelaxScreen(onBack: () -> Unit, onFinish: () -> Unit) {
     val tool = Tool.SqueezeRelax
     var running by rememberSaveable { mutableStateOf(false) }
-    val timer = rememberPhaseTimer(squeezePhases, running, loop = false, onPhaseStart = rememberPhaseBuzz())
+    val cues = rememberCues()
+    val timer = rememberPhaseTimer(squeezePhases, running, loop = false, onPhaseStart = cues::phase)
     val started = running || timer.progress > 0f || timer.phaseIndex > 0
     KeepScreenOn()
+    LaunchedEffect(timer.finished) {
+        if (timer.finished) { cues.say("All done"); onFinish() }
+    }
 
     val part = BodyPart.entries[timer.phaseIndex / 2]
     val squeezing = started && !timer.finished && timer.phase.kind == PhaseKind.Squeeze
@@ -148,12 +153,12 @@ fun SqueezeRelaxScreen(onBack: () -> Unit) {
         Spacer(Modifier.weight(1f))
         if (timer.finished) {
             Button(
-                onClick = onBack,
+                onClick = onFinish,
                 colors = ButtonDefaults.buttonColors(containerColor = tool.deep, contentColor = Color.White),
                 modifier = Modifier.fillMaxWidth().height(60.dp),
             ) { Text("🏠  Home", style = MaterialTheme.typography.labelLarge) }
         } else {
-            StartPauseRow(running, started, tool.deep, onToggle = { running = !running }, onReset = { running = false; timer.reset() })
+            StartPauseRow(running, started, tool.deep, onToggle = { running = !running }, onDone = { running = false; onFinish() })
         }
         Spacer(Modifier.height(8.dp))
     }

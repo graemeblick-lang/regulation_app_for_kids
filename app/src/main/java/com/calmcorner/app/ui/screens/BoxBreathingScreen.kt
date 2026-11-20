@@ -32,14 +32,19 @@ import com.calmcorner.app.ui.components.PhaseLabel
 import com.calmcorner.app.ui.components.TimedPhase
 import com.calmcorner.app.ui.components.ToolScaffold
 import com.calmcorner.app.ui.components.doneText
-import com.calmcorner.app.ui.components.rememberPhaseBuzz
+import androidx.compose.runtime.LaunchedEffect
+import com.calmcorner.app.data.LocalPrefs
+import com.calmcorner.app.ui.components.rememberCues
 import com.calmcorner.app.ui.components.rememberPhaseTimer
 import com.calmcorner.app.ui.components.tapToToggle
 
 @Composable
-fun BoxBreathingScreen(onBack: () -> Unit) {
+fun BoxBreathingScreen(onBack: () -> Unit, onFinish: () -> Unit) {
     val tool = Tool.BoxBreathing
-    var pace by rememberSaveable { mutableIntStateOf(4) }
+    val prefs = LocalPrefs.current
+    val cues = rememberCues()
+    var pace by rememberSaveable { mutableIntStateOf(prefs.speedFor(tool)) }
+    val target = prefs.breathsPerSession
     var running by rememberSaveable { mutableStateOf(false) }
     val phases = remember(pace) {
         val s = pace.toFloat()
@@ -50,9 +55,12 @@ fun BoxBreathingScreen(onBack: () -> Unit) {
             TimedPhase("Hold", s, PhaseKind.Hold),
         )
     }
-    val timer = rememberPhaseTimer(phases, running, onPhaseStart = rememberPhaseBuzz())
+    val timer = rememberPhaseTimer(phases, running, maxRounds = target, onPhaseStart = cues::phase)
     val started = running || timer.progress > 0f || timer.phaseIndex > 0 || timer.rounds > 0
     KeepScreenOn()
+    LaunchedEffect(timer.finished) {
+        if (timer.finished) { cues.say("All done"); onFinish() }
+    }
 
     ToolScaffold(
         title = tool.title,
@@ -102,12 +110,12 @@ fun BoxBreathingScreen(onBack: () -> Unit) {
             )
         }
         Spacer(Modifier.height(16.dp))
-        Text(doneText(timer.rounds, "box"), style = MaterialTheme.typography.titleMedium)
+        Text(doneText(timer.rounds, "box", target), style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.weight(1f))
         BreathingControls(
-            pace = pace, onPace = { pace = it; running = false },
+            pace = pace, onPace = { pace = it; prefs.saveSpeed(tool, it); running = false },
             running = running, started = started, color = tool.color, deep = tool.deep,
-            onToggle = { running = !running }, onReset = { running = false; timer.reset() },
+            onToggle = { running = !running }, onDone = { running = false; onFinish() },
         )
     }
 }

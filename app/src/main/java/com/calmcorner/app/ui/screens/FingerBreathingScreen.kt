@@ -32,7 +32,9 @@ import com.calmcorner.app.ui.components.PhaseKind
 import com.calmcorner.app.ui.components.TimedPhase
 import com.calmcorner.app.ui.components.ToolScaffold
 import com.calmcorner.app.ui.components.doneText
-import com.calmcorner.app.ui.components.rememberPhaseBuzz
+import androidx.compose.runtime.LaunchedEffect
+import com.calmcorner.app.data.LocalPrefs
+import com.calmcorner.app.ui.components.rememberCues
 import com.calmcorner.app.ui.components.rememberPhaseTimer
 import com.calmcorner.app.ui.components.tapToToggle
 import kotlin.math.cos
@@ -144,17 +146,23 @@ private class HandGeometry(private val w: Float, private val h: Float) {
 }
 
 @Composable
-fun FingerBreathingScreen(onBack: () -> Unit) {
+fun FingerBreathingScreen(onBack: () -> Unit, onFinish: () -> Unit) {
     val tool = Tool.FingerBreathing
-    var pace by rememberSaveable { mutableIntStateOf(4) }
+    val prefs = LocalPrefs.current
+    val cues = rememberCues()
+    var pace by rememberSaveable { mutableIntStateOf(prefs.speedFor(tool)) }
+    val target = prefs.breathsPerSession.let { if (it == 0) 0 else maxOf(1, it / 5) }
     var running by rememberSaveable { mutableStateOf(false) }
     val phases = remember(pace) {
         val s = pace.toFloat()
         List(5) { listOf(TimedPhase("Breathe in", s, PhaseKind.BreatheIn), TimedPhase("Breathe out", s, PhaseKind.BreatheOut)) }.flatten()
     }
-    val timer = rememberPhaseTimer(phases, running, onPhaseStart = rememberPhaseBuzz())
+    val timer = rememberPhaseTimer(phases, running, maxRounds = target, onPhaseStart = cues::phase)
     val started = running || timer.progress > 0f || timer.phaseIndex > 0 || timer.rounds > 0
     KeepScreenOn()
+    LaunchedEffect(timer.finished) {
+        if (timer.finished) { cues.say("All done"); onFinish() }
+    }
 
     val fingerIndex = timer.phaseIndex / 2
     val breathingIn = timer.phase.kind == PhaseKind.BreatheIn
@@ -210,12 +218,12 @@ fun FingerBreathingScreen(onBack: () -> Unit) {
             )
         }
         Spacer(Modifier.height(8.dp))
-        Text(doneText(timer.rounds, "hand"), style = MaterialTheme.typography.titleMedium)
+        Text(doneText(timer.rounds, "hand", target), style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.weight(1f))
         BreathingControls(
-            pace = pace, onPace = { pace = it; running = false },
+            pace = pace, onPace = { pace = it; prefs.saveSpeed(tool, it); running = false },
             running = running, started = started, color = tool.color, deep = tool.deep,
-            onToggle = { running = !running }, onReset = { running = false; timer.reset() },
+            onToggle = { running = !running }, onDone = { running = false; onFinish() },
         )
     }
 }

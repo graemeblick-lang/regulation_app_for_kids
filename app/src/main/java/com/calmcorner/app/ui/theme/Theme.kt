@@ -31,6 +31,12 @@ object CalmColors {
     val LeafDeep = Color(0xFF3B7548)
     val Lavender = Color(0xFF9C84C9)
     val LavenderDeep = Color(0xFF684CA0)
+    val Gold = Color(0xFFF2C14E)
+    val GoldDeep = Color(0xFF8A6400)
+    val Aqua = Color(0xFF5BC0BE)
+    val AquaDeep = Color(0xFF1F6F6D)
+    val Slate = Color(0xFF8FA3BF)
+    val SlateDeep = Color(0xFF4A5D7E)
 }
 
 /** Nunito: a rounded, friendly, very readable font (SIL Open Font License). */
