@@ -39,6 +39,16 @@ class CalmPrefs(context: Context) {
     fun updateVoice(v: Boolean) { voiceOn = v; prefs.edit { putBoolean("voice", v) } }
     fun updateVibration(v: Boolean) { vibrationOn = v; prefs.edit { putBoolean("vibration", v) } }
     fun updateBreaths(v: Int) { breathsPerSession = v; prefs.edit { putInt("breaths", v) } }
+    /** Calm Drum (grown-ups only): the slow speed it ends on, and how long it takes to get there. */
+    var drumEndBpm by mutableIntStateOf(prefs.getInt("drum_end_bpm", 60))
+        private set
+    var drumLength by mutableIntStateOf(prefs.getInt("drum_length", 1)) // 0 short, 1 normal, 2 long
+        private set
+    fun updateDrumEndBpm(v: Int) { drumEndBpm = v; prefs.edit { putInt("drum_end_bpm", v) } }
+    fun updateDrumLength(v: Int) { drumLength = v; prefs.edit { putInt("drum_length", v) } }
+    /** Number of beats spent slowing down. */
+    fun drumSlowBeats(): Int = when (drumLength) { 0 -> 24; 2 -> 60; else -> 40 }
+
     fun updateBubbleMotion(v: Int) { bubbleMotion = v; prefs.edit { putInt("bubble_motion", v) } }
     fun updateBalloonColor(v: Int) { balloonColor = v; prefs.edit { putInt("balloon_color", v) } }
 

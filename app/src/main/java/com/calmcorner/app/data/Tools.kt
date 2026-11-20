@@ -21,6 +21,7 @@ enum class Tool(
     SqueezeRelax("Squeeze and Relax", "Squeeze tight, then relax", "💪", CalmColors.Lavender, CalmColors.LavenderDeep),
     CalmJar("Calm Jar", "Shake it. Watch the glitter fall", "✨", CalmColors.Gold, CalmColors.GoldDeep),
     BubblePop("Bubble Pop", "Tap the bubbles to pop them", "🔵", CalmColors.Aqua, CalmColors.AquaDeep),
+    CalmDrum("Calm Drum", "Tap a steady beat. Slow down together", "🥁", CalmColors.Teal, CalmColors.TealDeep),
     CalmTimer("Calm Timer", "Rest quietly for a few minutes", "⏳", CalmColors.Slate, CalmColors.SlateDeep),
 }
 
@@ -41,7 +42,7 @@ enum class Zone(
     Green("Green", "🙂", "Calm, happy, ready", "You feel calm. Practise a tool now.",
         Color(0xFF4F9D5D), listOf(Tool.BoxBreathing, Tool.FingerBreathing)),
     Yellow("Yellow", "😬", "Worried, wiggly, silly", "These can help you feel calm.",
-        Color(0xFFE7B416), listOf(Tool.FingerBreathing, Tool.Grounding, Tool.BubblePop)),
+        Color(0xFFE7B416), listOf(Tool.CalmDrum, Tool.FingerBreathing, Tool.Grounding)),
     Red("Red", "😡", "Very angry or scared", "Stop. Breathe. You are safe.",
-        Color(0xFFD9534F), listOf(Tool.SqueezeRelax, Tool.BoxBreathing, Tool.CalmJar)),
+        Color(0xFFD9534F), listOf(Tool.SqueezeRelax, Tool.CalmDrum, Tool.CalmJar)),
 }

@@ -17,6 +17,7 @@ A simple, calm Android app with tools that help kids and young people regulate b
 | 💪 **Squeeze and Relax** | A drawn body lights up each part to squeeze, then relax. The face step zooms in on a big face to copy. |
 | ✨ **Calm Jar** | Shake the phone (or tap Shake) and watch glitter slowly settle. |
 | 🔵 **Bubble Pop** | A grid of bubbles to pop slowly, like a pop-it toy. |
+| 🥁 **Calm Drum** | One big drum for one hand. It picks up her own steady beat, joins in at her speed, slowly slows down, then ends with breathing in time with the drum. No score; always ends slow. |
 | ⏳ **Calm Timer** | 1, 2 or 5 minutes of quiet rest with a slowly pulsing circle. |
 
 **Also:**
@@ -25,7 +26,7 @@ A simple, calm Android app with tools that help kids and young people regulate b
 - **Remembers** her breathing speed for each tool, her balloon colour and her timer length.
 - **Breaths per session** (3, 5, 10 or keep going), ending with "All done ⭐".
 - **Home-screen widget** ("Calm now"): one tap opens her most-used tool.
-- **Grown-ups area**: press and hold ⚙️ on the home screen for 3 seconds. It shows this week's summary (exercises, how often she felt calmer afterwards, most helpful tool) and recent history with before/after colours. Settings: sound, vibration, breaths per session, Bubble Pop movement (still, calm or lively), theme (match phone, light or dark), show or hide tools, clear history.
+- **Grown-ups area**: press and hold ⚙️ on the home screen for 3 seconds. It shows this week's summary (exercises, how often she felt calmer afterwards, most helpful tool) and recent history with before/after colours. Settings: sound, vibration, breaths per session, Bubble Pop movement (still, calm or lively), Calm Drum ending speed and length, theme (match phone, light or dark), show or hide tools, clear history.
 - **No internet permission, no accounts, no ads, no tracking.** All history stays on the phone.
 
 ## Wording rules

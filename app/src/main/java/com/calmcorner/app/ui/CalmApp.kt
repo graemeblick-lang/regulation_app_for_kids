@@ -25,6 +25,7 @@ import com.calmcorner.app.ui.components.LocalVoice
 import com.calmcorner.app.ui.screens.BalloonBreathingScreen
 import com.calmcorner.app.ui.screens.BoxBreathingScreen
 import com.calmcorner.app.ui.screens.BubblePopScreen
+import com.calmcorner.app.ui.screens.CalmDrumScreen
 import com.calmcorner.app.ui.screens.CalmJarScreen
 import com.calmcorner.app.ui.screens.CalmTimerScreen
 import com.calmcorner.app.ui.screens.CheckInScreen
@@ -125,6 +126,7 @@ fun CalmApp(openTool: Tool? = null, onOpenToolHandled: () -> Unit = {}) {
                             Tool.CalmJar -> CalmJarScreen(goHome, finish)
                             Tool.BubblePop -> BubblePopScreen(goHome, finish)
                             Tool.CalmTimer -> CalmTimerScreen(goHome, finish)
+                            Tool.CalmDrum -> CalmDrumScreen(goHome, finish)
                         }
                     }
                 }

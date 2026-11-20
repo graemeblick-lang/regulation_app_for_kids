@@ -132,6 +132,16 @@ fun GrownUpScreen(onBack: () -> Unit) {
                 ChipRow(listOf(0 to "Still", 1 to "Calm", 2 to "Lively"), prefs.bubbleMotion) { prefs.updateBubbleMotion(it) }
             }
 
+            Section("Calm Drum") {
+                Text("The drum starts at her speed, then slowly gets slower.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(Modifier.height(6.dp))
+                Text("Ends at", style = MaterialTheme.typography.titleMedium)
+                ChipRow(listOf(50 to "Very slow", 60 to "Slow", 70 to "Gentle"), prefs.drumEndBpm) { prefs.updateDrumEndBpm(it) }
+                Spacer(Modifier.height(8.dp))
+                Text("How long it takes to slow down", style = MaterialTheme.typography.titleMedium)
+                ChipRow(listOf(0 to "Short", 1 to "Normal", 2 to "Long"), prefs.drumLength) { prefs.updateDrumLength(it) }
+            }
+
             Section("Look") {
                 Text("Theme", style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(6.dp))
