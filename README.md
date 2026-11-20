@@ -34,6 +34,9 @@ Other features:
    **https://github.com/graemeblick-lang/regulation_app_for_kids/releases/latest/download/CalmCorner.apk**
 2. Open the downloaded file. Android asks you to allow "install unknown apps" for Chrome. Allow it and tap **Install**.
 3. If Play Protect warns about an unknown developer, tap **More details → Install anyway**. This happens with every self-built test app.
+4. If Play Protect blocks it with no "Install anyway" option: open the **Play Store** app → tap your profile picture → **Play Protect** → ⚙️ settings → turn off **Scan apps with Play Protect**. Install the app, then **turn it back on**.
+
+> Builds made before 20 Nov 2026 (evening) were signed with a random key. If you have one of those installed, **uninstall it once** before installing a newer build. From then on, updates install over the top.
 
 A new build is published automatically on every push (see the **Releases** section of the repo page).
 

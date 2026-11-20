@@ -11,3 +11,6 @@ captures/
 *.keystore
 keystore.properties
 *.apk
+
+# Shared test-build signing key (not secret; release key must NEVER be committed)
+!app/debug.keystore

@@ -18,6 +18,18 @@ android {
         versionName = "0.1.0"
     }
 
+    // A fixed debug key, committed on purpose, so every test build (including
+    // the ones GitHub Actions makes) has the same signature and installs as an
+    // update over the previous one. This is NOT the Play Store release key.
+    signingConfigs {
+        getByName("debug") {
+            storeFile = file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
