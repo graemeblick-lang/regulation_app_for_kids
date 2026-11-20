@@ -1,101 +1,174 @@
 package com.calmcorner.app.ui.screens
 
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.calmcorner.app.data.Tool
 import com.calmcorner.app.ui.components.ToolScaffold
 import com.calmcorner.app.ui.components.rememberCues
+import kotlinx.coroutines.isActive
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.hypot
+import kotlin.math.sin
+import kotlin.random.Random
 
 private const val COLS = 5
 private const val ROWS = 6
+private const val TOTAL = COLS * ROWS
+private const val BURST_SECONDS = 0.5f
 
 private val rowColors = listOf(
     Color(0xFFE57B8D), Color(0xFFF0954A), Color(0xFFF2C94C),
     Color(0xFF5DB37E), Color(0xFF5B9BE0), Color(0xFF9C7BD6),
 )
 
+/** All bubble state in one place; drawn every frame on a single canvas. */
+private class BubbleField {
+    var time by mutableFloatStateOf(0f)              // seconds since the screen opened
+    var left by mutableIntStateOf(TOTAL)
+    val popped = BooleanArray(TOTAL)
+    val popTime = FloatArray(TOTAL) { -10f }
+    val spawnTime = FloatArray(TOTAL)
+    // Random phases/speeds so every bubble drifts differently.
+    val ph = FloatArray(TOTAL * 4) { Random.nextFloat() }
+
+    /** How far bubbles drift: a little at first, more as fewer are left. */
+    fun driftAmount(cell: Float): Float {
+        val gone = 1f - left.toFloat() / TOTAL
+        return cell * (0.035f + 0.17f * gone)
+    }
+
+    fun centre(i: Int, cell: Float): Offset {
+        val c = i % COLS
+        val r = i / COLS
+        val amp = driftAmount(cell)
+        val t = time
+        val dx = amp * sin(t * (0.55f + ph[i * 4] * 0.5f) + ph[i * 4 + 1] * 2f * PI.toFloat())
+        val dy = amp * cos(t * (0.45f + ph[i * 4 + 2] * 0.5f) + ph[i * 4 + 3] * 2f * PI.toFloat())
+        return Offset((c + 0.5f) * cell + dx, (r + 0.5f) * cell + dy)
+    }
+
+    fun refill() {
+        for (i in 0 until TOTAL) {
+            popped[i] = false
+            popTime[i] = -10f
+            spawnTime[i] = time + i * 0.03f // bounce back in one after another
+        }
+        left = TOTAL
+    }
+}
+
 @Composable
 fun BubblePopScreen(onBack: () -> Unit, onFinish: () -> Unit) {
     val tool = Tool.BubblePop
     val cues = rememberCues()
-    val popped = remember { mutableStateListOf<Boolean>().apply { repeat(COLS * ROWS) { add(false) } } }
-    val left = popped.count { !it }
-    val allPopped = left == 0
+    val field = remember { BubbleField() }
+    val allPopped = field.left == 0
+
+    // Animation clock.
+    LaunchedEffect(Unit) {
+        val start = withFrameNanos { it }
+        while (isActive) {
+            withFrameNanos { now -> field.time = (now - start) / 1_000_000_000f }
+        }
+    }
 
     ToolScaffold(
         title = tool.title,
         tip = "Pop the bubbles. Go slowly.",
         howTo = "Tap one bubble at a time.\nTake a slow breath between pops.",
         color = tool.deep,
-        showTip = left == COLS * ROWS,
+        showTip = field.left == TOTAL,
         onBack = onBack,
     ) {
         Spacer(Modifier.weight(1f))
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth(0.95f)) {
-            for (r in 0 until ROWS) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    for (c in 0 until COLS) {
-                        val i = r * COLS + c
-                        Bubble(
-                            color = rowColors[r],
-                            popped = popped[i],
-                            onPop = {
-                                if (!popped[i]) {
-                                    popped[i] = true
-                                    cues.buzz()
-                                    if (popped.all { it }) cues.say("All popped. Well done")
-                                }
-                            },
-                            modifier = Modifier.weight(1f),
-                        )
+        Canvas(
+            Modifier
+                .fillMaxWidth(0.95f)
+                .aspectRatio(COLS.toFloat() / ROWS)
+                .semantics { contentDescription = "${field.left} bubbles left. Tap a bubble to pop it." }
+                .pointerInput(Unit) {
+                    detectTapGestures { pos ->
+                        val cell = size.width.toFloat() / COLS
+                        val r = cell * 0.40f
+                        // Pop the closest bubble under the finger (generous hit area).
+                        var best = -1
+                        var bestD = Float.MAX_VALUE
+                        for (i in 0 until TOTAL) {
+                            if (field.popped[i]) continue
+                            val c = field.centre(i, cell)
+                            val d = hypot(c.x - pos.x, c.y - pos.y)
+                            if (d < r * 1.25f && d < bestD) { best = i; bestD = d }
+                        }
+                        if (best >= 0) {
+                            field.popped[best] = true
+                            field.popTime[best] = field.time
+                            field.left--
+                            cues.buzz()
+                            if (field.left == 0) cues.say("All popped. Well done")
+                        }
                     }
+                },
+        ) {
+            val t = field.time // read: redraw every frame
+            val cell = size.width / COLS
+            val r = cell * 0.40f
+            for (i in 0 until TOTAL) {
+                val color = rowColors[i / COLS]
+                val centre = field.centre(i, cell)
+                if (!field.popped[i]) {
+                    val grow = easeOutBack(((t - field.spawnTime[i]) / 0.35f).coerceIn(0f, 1f))
+                    val wobble = 1f + 0.035f * sin(t * 2.2f + field.ph[i * 4] * 6f)
+                    drawBubble(centre, r * grow * wobble, color)
+                } else {
+                    val p = (t - field.popTime[i]) / BURST_SECONDS
+                    if (p in 0f..1f) drawBurst(centre, r, color, p, field.ph[i * 4 + 1])
                 }
             }
         }
         Spacer(Modifier.height(16.dp))
         Text(
-            if (allPopped) "All popped! ⭐" else "$left left",
+            if (allPopped) "All popped! ⭐" else "${field.left} left",
             style = MaterialTheme.typography.headlineMedium,
         )
         Spacer(Modifier.weight(1f))
         Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth()) {
             if (allPopped) {
-                OutlinedButton(onClick = { for (i in popped.indices) popped[i] = false }, modifier = Modifier.height(60.dp)) {
+                OutlinedButton(onClick = { field.refill() }, modifier = Modifier.height(60.dp)) {
                     Text("🔄 Again", style = MaterialTheme.typography.labelLarge, color = tool.deep)
                 }
                 Spacer(Modifier.width(12.dp))
             }
-            if (allPopped || left < COLS * ROWS) {
+            if (field.left < TOTAL) {
                 Button(
                     onClick = onFinish,
                     colors = ButtonDefaults.buttonColors(containerColor = tool.deep, contentColor = Color.White),
@@ -107,30 +180,48 @@ fun BubblePopScreen(onBack: () -> Unit, onFinish: () -> Unit) {
     }
 }
 
-@Composable
-private fun Bubble(color: Color, popped: Boolean, onPop: () -> Unit, modifier: Modifier = Modifier) {
-    // Squash down when popped, like pressing a pop-it.
-    val depth by animateFloatAsState(if (popped) 1f else 0f, tween(220), label = "pop")
-    Box(
-        modifier
-            .aspectRatio(1f)
-            .clip(CircleShape)
-            .semantics { contentDescription = if (popped) "Popped bubble" else "Bubble" }
-            .clickable(onClick = onPop),
-    ) {
-        Canvas(Modifier.fillMaxSize()) {
-            val r = size.minDimension / 2f
-            val c = Offset(size.width / 2f, size.height / 2f)
-            if (depth < 1f) {
-                // Round shiny bubble
-                drawCircle(color.copy(alpha = 0.85f), r * (1f - 0.15f * depth), c)
-                drawCircle(Color.White.copy(alpha = 0.55f * (1f - depth)), r * 0.22f, Offset(c.x - r * 0.35f, c.y - r * 0.35f))
-            }
-            if (depth > 0f) {
-                // Pushed-in: flat, paler, with a soft ring
-                drawCircle(color.copy(alpha = 0.30f * depth), r * 0.92f, c)
-                drawCircle(color.copy(alpha = 0.7f * depth), r * 0.80f, c, style = Stroke(r * 0.08f))
-            }
-        }
+/** Overshoots slightly then settles: a soft "boing". */
+private fun easeOutBack(x: Float): Float {
+    val c1 = 1.70158f
+    val c3 = c1 + 1f
+    val y = x - 1f
+    return 1f + c3 * y * y * y + c1 * y * y
+}
+
+/** A shiny bubble: body, soft rim, and two highlights. */
+private fun DrawScope.drawBubble(c: Offset, r: Float, color: Color) {
+    if (r <= 0f) return
+    drawCircle(color.copy(alpha = 0.88f), r, c)
+    drawCircle(Color.White.copy(alpha = 0.25f), r, c, style = Stroke(r * 0.10f))
+    drawCircle(Color.White.copy(alpha = 0.65f), r * 0.20f, Offset(c.x - r * 0.38f, c.y - r * 0.38f))
+    drawCircle(Color.White.copy(alpha = 0.45f), r * 0.09f, Offset(c.x - r * 0.12f, c.y - r * 0.55f))
+}
+
+/**
+ * The pop (p goes 0 -> 1 over half a second): the bubble swells and vanishes,
+ * a ring ripples outwards, and droplets fly off and fade.
+ */
+private fun DrawScope.drawBurst(c: Offset, r: Float, color: Color, p: Float, phase: Float) {
+    val fade = 1f - p
+    // Swell and vanish (quickly)
+    if (p < 0.15f) {
+        val q = p / 0.15f
+        drawCircle(color.copy(alpha = 0.88f * (1f - q)), r * (1f + 0.2f * q), c)
+    }
+    // Ripple ring
+    drawCircle(color.copy(alpha = 0.8f * fade), r * (1f + 0.9f * p), c, style = Stroke(r * 0.14f * fade + 1f))
+    // Droplets
+    val count = 9
+    for (k in 0 until count) {
+        val a = (k.toFloat() / count + phase) * 2f * PI.toFloat()
+        val dist = r * (0.95f + 1.6f * p) // start at the rim, spray outwards past the ring
+        val d = Offset(c.x + cos(a) * dist, c.y + sin(a) * dist + r * 0.4f * p * p) // tiny fall, like real droplets
+        drawCircle(color.copy(alpha = fade), r * 0.17f * fade + 0.5f, d)
+    }
+    // Sparkle in the middle
+    if (p < 0.5f) {
+        val s = r * 0.35f * (1f - p * 2f)
+        drawLine(Color.White.copy(alpha = 0.9f * fade), Offset(c.x - s, c.y), Offset(c.x + s, c.y), strokeWidth = r * 0.07f)
+        drawLine(Color.White.copy(alpha = 0.9f * fade), Offset(c.x, c.y - s), Offset(c.x, c.y + s), strokeWidth = r * 0.07f)
     }
 }
