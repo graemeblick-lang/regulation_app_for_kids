@@ -140,6 +140,8 @@ fun GrownUpScreen(onBack: () -> Unit) {
                 Spacer(Modifier.height(8.dp))
                 Text("How long it takes to slow down", style = MaterialTheme.typography.titleMedium)
                 ChipRow(listOf(0 to "Short", 1 to "Normal", 2 to "Long"), prefs.drumLength) { prefs.updateDrumLength(it) }
+                Spacer(Modifier.height(4.dp))
+                SwitchRow("Tick sound on the beat", "Off: the beat is shown by the ring and a buzz.", prefs.drumTick) { prefs.updateDrumTick(it) }
             }
 
             Section("Look") {

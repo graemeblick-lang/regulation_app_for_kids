@@ -44,6 +44,10 @@ class CalmPrefs(context: Context) {
         private set
     var drumLength by mutableIntStateOf(prefs.getInt("drum_length", 1)) // 0 short, 1 normal, 2 long
         private set
+    /** Audible tick on the guide beat. Off by default: the ring and buzz are enough. */
+    var drumTick by mutableStateOf(prefs.getBoolean("drum_tick", false))
+        private set
+    fun updateDrumTick(v: Boolean) { drumTick = v; prefs.edit { putBoolean("drum_tick", v) } }
     fun updateDrumEndBpm(v: Int) { drumEndBpm = v; prefs.edit { putInt("drum_end_bpm", v) } }
     fun updateDrumLength(v: Int) { drumLength = v; prefs.edit { putInt("drum_length", v) } }
     /** Number of beats spent slowing down. */

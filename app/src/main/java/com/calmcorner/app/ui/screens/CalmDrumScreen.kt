@@ -89,7 +89,7 @@ fun CalmDrumScreen(onBack: () -> Unit, onFinish: () -> Unit) {
 
     fun onBeat() {
         s.lastBeat = s.nextBeat
-        if (prefs.voiceOn) sounds.play(R.raw.tick, 0.5f)
+        if (prefs.voiceOn && prefs.drumTick) sounds.play(R.raw.tick, 0.5f)
         cues.buzz() // lets her feel the beat even with sound off (e.g. on the bus)
         when (s.stage) {
             DrumStage.Follow -> {
