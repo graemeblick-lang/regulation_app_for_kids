@@ -225,12 +225,23 @@ private fun BodyFigure(
 
         // Head + face
         val head = pt(.5f, .18f)
-        drawCircle(col(BodyPart.Face), 0.11f * u, head)
+        // The face stays a lighter shade so features remain clear and friendly.
+        drawCircle(if (isPart(BodyPart.Face)) mid else soft, 0.11f * u, head)
         drawFace(head, u, w, h, faceSqueeze = isPart(BodyPart.Face) && tension > 0.5f, straining = part != null && tension > 0.5f,
-            ink = if (isPart(BodyPart.Face)) Color.White else face)
+            ink = face)
 
         // Tension lines around the squeezed part
-        if (part != null && tension > 0.05f) {
+        if (part == BodyPart.Face && tension > 0.05f) {
+            // Soft "squeeze" marks either side of the head (no spikes around the face).
+            val arcColor = deep.copy(alpha = tension)
+            listOf(0.15f, 0.185f).forEach { r ->
+                val rr = r * u
+                val tl = Offset(head.x - rr, head.y - rr)
+                val sz = Size(rr * 2, rr * 2)
+                drawArc(arcColor, 153f, 54f, false, tl, sz, style = Stroke(0.013f * u, cap = StrokeCap.Round))
+                drawArc(arcColor, -27f, 54f, false, tl, sz, style = Stroke(0.013f * u, cap = StrokeCap.Round))
+            }
+        } else if (part != null && tension > 0.05f) {
             val centres: List<Offset> = when (part) {
                 BodyPart.Hands -> arms.map { it[2] }
                 BodyPart.Arms -> arms.map { it[1] }
@@ -262,21 +273,23 @@ private fun DrawScope.drawFace(head: Offset, u: Float, w: Float, h: Float, faceS
     val mouthY = head.y + 0.05f * h
     when {
         faceSqueeze -> {
-            // > <  eyes and a wobbly mouth
-            val a = 0.017f * u
-            val b = 0.014f * u
-            var cx = head.x - ex
-            drawPath(Path().apply { moveTo(cx - a, ey - b); lineTo(cx + a, ey); lineTo(cx - a, ey + b) }, ink, style = Stroke(sw, cap = StrokeCap.Round, join = StrokeJoin.Round))
-            cx = head.x + ex
-            drawPath(Path().apply { moveTo(cx + a, ey - b); lineTo(cx - a, ey); lineTo(cx + a, ey + b) }, ink, style = Stroke(sw, cap = StrokeCap.Round, join = StrokeJoin.Round))
-            val zig = Path().apply {
-                for (i in 0..4) {
-                    val px = head.x - 0.04f * w + i * 0.02f * w
-                    val py = mouthY + (if (i % 2 == 1) -1 else 1) * 0.008f * u
-                    if (i == 0) moveTo(px, py) else lineTo(px, py)
-                }
+            // Friendly "sour lemon" face: rosy cheeks, eyes squeezed shut, little pucker.
+            val cheek = Color(0xD9FFAABE)
+            listOf(-1f, 1f).forEach { s ->
+                val cx = head.x + s * 0.062f * w
+                val cy = head.y + 0.025f * h
+                drawOval(cheek, topLeft = Offset(cx - 0.022f * u, cy - 0.015f * u), size = Size(0.044f * u, 0.030f * u))
             }
-            drawPath(zig, ink, style = Stroke(sw, cap = StrokeCap.Round, join = StrokeJoin.Round))
+            val er = 0.02f * u
+            listOf(-1f, 1f).forEach { s ->
+                val cx = head.x + s * ex
+                val cy = ey - 0.012f * u
+                drawArc(ink, startAngle = 45f, sweepAngle = 90f, useCenter = false,
+                    topLeft = Offset(cx - er, cy - er), size = Size(er * 2, er * 2), style = Stroke(0.014f * u, cap = StrokeCap.Round))
+            }
+            val mx = 0.014f * u
+            val my = 0.017f * u
+            drawOval(ink, topLeft = Offset(head.x - mx, mouthY + 0.002f * h - my), size = Size(mx * 2, my * 2), style = Stroke(sw))
         }
         straining -> {
             // Concentrating: dot eyes, flat mouth
