@@ -86,7 +86,7 @@ fun BalloonBreathingScreen(onBack: () -> Unit) {
 
     ToolScaffold(
         title = tool.title,
-        tip = "Fill your tummy like a balloon.",
+        tip = "Breathe in slowly. Your tummy gets big.",
         howTo = "Put a hand on your tummy.\n👃 Breathe in through your nose. Feel it get big.\n👄 Breathe out slowly through your mouth.",
         color = tool.deep,
         showTip = !running,

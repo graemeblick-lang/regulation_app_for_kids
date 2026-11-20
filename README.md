@@ -12,7 +12,7 @@ A simple, calm Android app with tools that help kids and young people regulate b
 | 🖐️ **Finger Breathing** | A dot traces the outline of a hand: up a finger to breathe in, down to breathe out. |
 | 🎈 **Balloon Breathing** | Belly breathing with a balloon that inflates and deflates. The child picks the balloon colour (remembered). The out-breath is longer than the in-breath. |
 | 👀 **Five Senses** | Grounding. Tap a circle for each thing you see, touch, hear, smell and taste. |
-| 💪 **Squeeze and Relax** | Muscle relaxation. A drawn body lights up the part to squeeze (hands, arms, shoulders, face, tummy, feet) and shows it tense, then relaxed. |
+| 💪 **Squeeze and Relax** | Muscle relaxation. A drawn body lights up the part to squeeze (hands, arms, shoulders, tummy, feet) and shows it tense, then relaxed. The face step zooms in on a big face to copy. |
 
 Other features:
 - **Colour check-in** on the home screen: Blue (sad, tired), Green (calm, ready), Yellow (worried, wiggly), Red (very angry or scared). It suggests tools for that state. The app deliberately avoids trademarked programme names.
@@ -20,6 +20,12 @@ Other features:
 - **Gentle vibration** at each phase change, so a child can follow along with eyes closed.
 - The screen stays on during an exercise. Light and dark themes.
 - **No internet permission, no accounts, no ads, no tracking.** This makes the Play Store "Designed for Families" review much simpler.
+
+## Wording rules
+
+- Short, simple words. Many users find reading hard, especially when upset.
+- **Literal instructions only, with no metaphors** (e.g. "Breathe in slowly. Your tummy gets big.", not "Fill your tummy like a balloon"). Kids who take words literally can follow them.
+- An emoji or picture next to key words, as a reading aid.
 
 ## Tech stack
 

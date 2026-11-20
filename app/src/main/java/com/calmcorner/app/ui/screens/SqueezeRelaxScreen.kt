@@ -50,11 +50,11 @@ import kotlin.math.min
 import kotlin.math.sin
 
 enum class BodyPart(val squeeze: String, val relax: String) {
-    Hands("Squeeze your hands tight", "Let go. Soft hands."),
-    Arms("Make strong arms", "Let your arms flop."),
-    Shoulders("Shoulders up to your ears", "Drop your shoulders."),
+    Hands("Squeeze your hands tight", "Open your hands. Make them soft."),
+    Arms("Bend your arms. Make them tight.", "Put your arms down. Make them soft."),
+    Shoulders("Lift your shoulders up high", "Put your shoulders down."),
     Face("Squeeze your eyes shut tight!", "Open your eyes. Smile."),
-    Tummy("Make your tummy hard", "Soft tummy."),
+    Tummy("Pull your tummy in tight", "Make your tummy soft."),
     Feet("Push your feet down hard", "Wiggle your toes. Rest."),
 }
 
@@ -80,8 +80,8 @@ fun SqueezeRelaxScreen(onBack: () -> Unit) {
 
     ToolScaffold(
         title = tool.title,
-        tip = "Squeeze tight. Then let go.",
-        howTo = "We go through your body, one part at a time.\n💪 Squeeze for 5 seconds.\n😌 Then let it go floppy.",
+        tip = "Squeeze tight. Then relax.",
+        howTo = "We go through your body, one part at a time.\n💪 Squeeze for 5 seconds.\n😌 Then make it soft.",
         color = tool.deep,
         showTip = !running && !timer.finished,
         onBack = onBack,
@@ -117,7 +117,7 @@ fun SqueezeRelaxScreen(onBack: () -> Unit) {
             timer.finished -> {
                 Text("All done! 🌈", style = MaterialTheme.typography.headlineMedium)
                 Text(
-                    "Your body had a squeeze and a rest.",
+                    "You squeezed and relaxed your whole body.",
                     style = MaterialTheme.typography.bodyLarge,
                     textAlign = TextAlign.Center,
                 )
@@ -283,7 +283,7 @@ private fun DrawScope.drawFace(head: Offset, u: Float, w: Float, h: Float, faceS
     val mouthY = head.y + 0.05f * h
     when {
         faceSqueeze -> {
-            // Friendly "sour lemon" face: rosy cheeks, eyes squeezed shut, little pucker.
+            // Friendly scrunched face: rosy cheeks, eyes squeezed shut, little pucker.
             val cheek = Color(0xD9FFAABE)
             listOf(-1f, 1f).forEach { s ->
                 val cx = head.x + s * 0.062f * w

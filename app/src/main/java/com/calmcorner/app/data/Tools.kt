@@ -14,11 +14,11 @@ enum class Tool(
     val color: Color,
     val deep: Color,
 ) {
-    BoxBreathing("Box Breathing", "Breathe around a square", "🟦", CalmColors.Sky, CalmColors.SkyDeep),
-    FingerBreathing("Finger Breathing", "Trace your hand", "🖐️", CalmColors.Peach, CalmColors.PeachDeep),
-    BalloonBreathing("Balloon Breathing", "Fill your tummy balloon", "🎈", CalmColors.Rose, CalmColors.RoseDeep),
+    BoxBreathing("Box Breathing", "Follow the dot around a square", "🟦", CalmColors.Sky, CalmColors.SkyDeep),
+    FingerBreathing("Finger Breathing", "Trace your fingers and breathe", "🖐️", CalmColors.Peach, CalmColors.PeachDeep),
+    BalloonBreathing("Balloon Breathing", "Breathe deep into your tummy", "🎈", CalmColors.Rose, CalmColors.RoseDeep),
     Grounding("Five Senses", "Look, touch, listen", "👀", CalmColors.Leaf, CalmColors.LeafDeep),
-    SqueezeRelax("Squeeze and Relax", "Squeeze tight, then let go", "💪", CalmColors.Lavender, CalmColors.LavenderDeep),
+    SqueezeRelax("Squeeze and Relax", "Squeeze tight, then relax", "💪", CalmColors.Lavender, CalmColors.LavenderDeep),
 }
 
 /**
@@ -33,11 +33,11 @@ enum class Zone(
     val color: Color,
     val suggestions: List<Tool>,
 ) {
-    Blue("Blue", "😔", "Sad, tired, slow", "Feeling low? Let's wake up your body.",
+    Blue("Blue", "😔", "Sad, tired, slow", "Sad or tired? These can help.",
         Color(0xFF4A7FC1), listOf(Tool.SqueezeRelax, Tool.BalloonBreathing)),
-    Green("Green", "🙂", "Calm, happy, ready", "You're ready! Practise a tool.",
+    Green("Green", "🙂", "Calm, happy, ready", "You feel calm. Practise a tool now.",
         Color(0xFF4F9D5D), listOf(Tool.BoxBreathing, Tool.FingerBreathing)),
-    Yellow("Yellow", "😬", "Worried, wiggly, silly", "Let's slow down.",
+    Yellow("Yellow", "😬", "Worried, wiggly, silly", "These can help you feel calm.",
         Color(0xFFE7B416), listOf(Tool.FingerBreathing, Tool.Grounding, Tool.BoxBreathing)),
     Red("Red", "😡", "Very angry or scared", "Stop. Breathe. You are safe.",
         Color(0xFFD9534F), listOf(Tool.SqueezeRelax, Tool.BoxBreathing)),

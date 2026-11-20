@@ -172,7 +172,7 @@ fun StartPauseRow(
             Text(
                 when {
                     running -> "⏸  Pause"
-                    started -> "▶  Keep going"
+                    started -> "▶  Continue"
                     else -> "▶  Start"
                 },
                 style = MaterialTheme.typography.labelLarge,

@@ -57,7 +57,7 @@ fun HomeScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.height(20.dp))
-            Text("What colour are you?", style = MaterialTheme.typography.titleLarge)
+            Text("How do you feel? Pick a colour.", style = MaterialTheme.typography.titleLarge)
             Spacer(Modifier.height(10.dp))
             Zone.entries.chunked(2).forEach { row ->
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.padding(bottom = 10.dp)) {
@@ -87,7 +87,7 @@ fun HomeScreen(
         if (suggested.isNotEmpty()) {
             item { SectionTitle("Try these") }
             items(suggested, key = { "s-" + it.name }) { ToolCard(it, highlighted = true, onClick = { onOpenTool(it) }) }
-            item { SectionTitle("More") }
+            item { SectionTitle("More tools") }
         } else {
             item { SectionTitle("Calm tools") }
         }
@@ -95,7 +95,7 @@ fun HomeScreen(
         item {
             Spacer(Modifier.height(12.dp))
             Text(
-                "Still feel big feelings? Talk to a grown-up you trust. 💛",
+                "Still upset? Talk to a grown-up you trust. 💛",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
