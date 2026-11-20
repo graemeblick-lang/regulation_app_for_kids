@@ -29,11 +29,13 @@ Other features:
 
 ## Get it on a phone
 
-### Option A: download the APK from GitHub (no setup)
-1. Every push builds the app in the **Actions** tab of this GitHub repo (workflow "Build APK").
-2. Open the latest green run and download the **calm-corner-debug-apk** artifact (a zip file).
-3. Unzip it and copy `app-debug.apk` to the Android phone (Google Drive, email or a USB cable).
-4. Open it on the phone. Android asks you to allow "install unknown apps" for that source. Allow it and install.
+### Option A: download the APK straight onto the phone (no setup)
+1. On the Android phone, open this link in Chrome (sign in to GitHub first if the repo is private):
+   **https://github.com/graemeblick-lang/regulation_app_for_kids/releases/latest/download/CalmCorner.apk**
+2. Open the downloaded file. Android asks you to allow "install unknown apps" for Chrome. Allow it and tap **Install**.
+3. If Play Protect warns about an unknown developer, tap **More details → Install anyway**. This happens with every self-built test app.
+
+A new build is published automatically on every push (see the **Releases** section of the repo page).
 
 ### Option B: Android Studio (to make changes)
 1. Install [Android Studio](https://developer.android.com/studio).

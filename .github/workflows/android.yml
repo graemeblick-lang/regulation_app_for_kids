@@ -5,6 +5,9 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: write   # needed to publish the APK as a GitHub Release
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -17,8 +20,24 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Build debug APK
         run: ./gradlew assembleDebug --stacktrace
-      - name: Upload APK
+      - name: Rename APK
+        run: cp app/build/outputs/apk/debug/app-debug.apk CalmCorner.apk
+      - name: Upload APK (Actions artifact)
         uses: actions/upload-artifact@v4
         with:
           name: calm-corner-debug-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          path: CalmCorner.apk
+      # Publishes/refreshes a "latest" release so the APK has a simple, stable download link:
+      # https://github.com/<owner>/<repo>/releases/latest/download/CalmCorner.apk
+      - name: Publish to "latest" release
+        if: github.event_name != 'pull_request'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest-build
+          name: Calm Corner (latest test build)
+          body: |
+            Latest test build from commit ${{ github.sha }}.
+            On your Android phone, tap **CalmCorner.apk** below to download and install it.
+          prerelease: false
+          make_latest: true
+          files: CalmCorner.apk
