@@ -58,7 +58,7 @@ private val fingers = listOf(
 private const val ARC_K = 0.5523f // cubic control factor for a quarter circle
 
 /** Key points of one finger (unit coords, already tilted). */
-private class FingerPoints(spec: FingerSpec) {
+private class FingerPoints(private val spec: FingerSpec) {
     private val a = Math.toRadians(spec.tilt.toDouble())
     private val c = cos(a).toFloat()
     private val s = sin(a).toFloat()
