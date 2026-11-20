@@ -8,21 +8,41 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import com.calmcorner.app.R
 
+/**
+ * Each tool has a soft colour (backgrounds, tracks, shapes) and a deep colour
+ * (buttons, the moving dot). Deep colours pass WCAG AA (4.5:1) with white text.
+ */
 object CalmColors {
     val Teal = Color(0xFF3A7D7C)
+    val TealDeep = Color(0xFF2F6B6A)
     val Sky = Color(0xFF6C9BD2)
+    val SkyDeep = Color(0xFF2F67A3)
     val Peach = Color(0xFFE9A06B)
+    val PeachDeep = Color(0xFFA8541C)
     val Rose = Color(0xFFE57B8D)
+    val RoseDeep = Color(0xFFB03A55)
     val Leaf = Color(0xFF7DB88A)
+    val LeafDeep = Color(0xFF3B7548)
     val Lavender = Color(0xFF9C84C9)
-    val Sun = Color(0xFFF2C14E)
+    val LavenderDeep = Color(0xFF684CA0)
 }
 
+/** Nunito: a rounded, friendly, very readable font (SIL Open Font License). */
+val Nunito = FontFamily(
+    Font(R.font.nunito_regular, FontWeight.Normal),
+    Font(R.font.nunito_semibold, FontWeight.SemiBold),
+    Font(R.font.nunito_bold, FontWeight.Bold),
+    Font(R.font.nunito_extrabold, FontWeight.ExtraBold),
+)
+
 private val LightColors = lightColorScheme(
-    primary = CalmColors.Teal,
+    primary = CalmColors.TealDeep,
     onPrimary = Color.White,
     primaryContainer = Color(0xFFDCEFEA),
     onPrimaryContainer = Color(0xFF173B3A),
@@ -30,8 +50,8 @@ private val LightColors = lightColorScheme(
     onBackground = Color(0xFF2B2D33),
     surface = Color.White,
     onSurface = Color(0xFF2B2D33),
-    surfaceVariant = Color(0xFFF1ECE4),
-    onSurfaceVariant = Color(0xFF5E616B),
+    surfaceVariant = Color(0xFFEDE7DD),
+    onSurfaceVariant = Color(0xFF545761),
 )
 
 private val DarkColors = darkColorScheme(
@@ -47,14 +67,26 @@ private val DarkColors = darkColorScheme(
     onSurfaceVariant = Color(0xFFB9BBC2),
 )
 
+private fun TextStyle.nunito() = copy(fontFamily = Nunito)
+
+private val base = Typography()
+
 private val CalmTypography = Typography(
-    displaySmall = TextStyle(fontSize = 34.sp, fontWeight = FontWeight.SemiBold, lineHeight = 40.sp),
-    headlineMedium = TextStyle(fontSize = 26.sp, fontWeight = FontWeight.SemiBold, lineHeight = 32.sp),
-    titleLarge = TextStyle(fontSize = 21.sp, fontWeight = FontWeight.SemiBold, lineHeight = 28.sp),
-    titleMedium = TextStyle(fontSize = 17.sp, fontWeight = FontWeight.Medium, lineHeight = 24.sp),
-    bodyLarge = TextStyle(fontSize = 17.sp, lineHeight = 25.sp),
-    bodyMedium = TextStyle(fontSize = 15.sp, lineHeight = 22.sp),
-    labelLarge = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Medium),
+    displayLarge = base.displayLarge.nunito(),
+    displayMedium = base.displayMedium.nunito(),
+    displaySmall = TextStyle(fontFamily = Nunito, fontSize = 36.sp, fontWeight = FontWeight.ExtraBold, lineHeight = 42.sp),
+    headlineLarge = base.headlineLarge.nunito(),
+    headlineMedium = TextStyle(fontFamily = Nunito, fontSize = 28.sp, fontWeight = FontWeight.Bold, lineHeight = 34.sp),
+    headlineSmall = base.headlineSmall.nunito(),
+    titleLarge = TextStyle(fontFamily = Nunito, fontSize = 22.sp, fontWeight = FontWeight.Bold, lineHeight = 28.sp),
+    titleMedium = TextStyle(fontFamily = Nunito, fontSize = 18.sp, fontWeight = FontWeight.Bold, lineHeight = 24.sp),
+    titleSmall = base.titleSmall.nunito(),
+    bodyLarge = TextStyle(fontFamily = Nunito, fontSize = 19.sp, fontWeight = FontWeight.SemiBold, lineHeight = 27.sp),
+    bodyMedium = TextStyle(fontFamily = Nunito, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, lineHeight = 23.sp),
+    bodySmall = base.bodySmall.nunito(),
+    labelLarge = TextStyle(fontFamily = Nunito, fontSize = 18.sp, fontWeight = FontWeight.Bold),
+    labelMedium = base.labelMedium.nunito(),
+    labelSmall = base.labelSmall.nunito(),
 )
 
 @Composable

@@ -24,20 +24,21 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import com.calmcorner.app.data.Tool
+import com.calmcorner.app.ui.components.BreathingControls
 import com.calmcorner.app.ui.components.KeepScreenOn
-import com.calmcorner.app.ui.components.PaceSelector
 import com.calmcorner.app.ui.components.PhaseKind
 import com.calmcorner.app.ui.components.PhaseLabel
-import com.calmcorner.app.ui.components.StartPauseRow
 import com.calmcorner.app.ui.components.TimedPhase
 import com.calmcorner.app.ui.components.ToolScaffold
-import com.calmcorner.app.ui.components.breathsText
+import com.calmcorner.app.ui.components.doneText
 import com.calmcorner.app.ui.components.rememberPhaseBuzz
 import com.calmcorner.app.ui.components.rememberPhaseTimer
+import com.calmcorner.app.ui.components.tapToToggle
 
 @Composable
 fun BalloonBreathingScreen(onBack: () -> Unit) {
-    val color = Tool.BalloonBreathing.color
+    val tool = Tool.BalloonBreathing
+    val color = tool.color
     var pace by rememberSaveable { mutableIntStateOf(4) }
     var running by rememberSaveable { mutableStateOf(false) }
     // Longer out-breath than in-breath helps the body settle.
@@ -49,6 +50,7 @@ fun BalloonBreathingScreen(onBack: () -> Unit) {
         )
     }
     val timer = rememberPhaseTimer(phases, running, onPhaseStart = rememberPhaseBuzz())
+    val started = running || timer.progress > 0f || timer.phaseIndex > 0 || timer.rounds > 0
     KeepScreenOn()
 
     val eased = FastOutSlowInEasing.transform(timer.progress)
@@ -59,12 +61,15 @@ fun BalloonBreathingScreen(onBack: () -> Unit) {
     }
 
     ToolScaffold(
-        title = Tool.BalloonBreathing.title,
-        instructions = "Put a hand on your tummy. Breathe in through your nose to fill your belly balloon, then let it out slowly through your mouth.",
+        title = tool.title,
+        tip = "Fill your tummy like a balloon.",
+        howTo = "Put a hand on your tummy.\n👃 Breathe in through your nose. Feel it get big.\n👄 Breathe out slowly through your mouth.",
+        color = tool.deep,
+        showTip = !running,
         onBack = onBack,
     ) {
         Spacer(Modifier.weight(1f))
-        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxWidth(0.9f).aspectRatio(0.9f)) {
+        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxWidth(0.9f).aspectRatio(0.9f).tapToToggle { running = !running }) {
             val stringColor = MaterialTheme.colorScheme.onSurfaceVariant
             Canvas(Modifier.matchParentSize()) {
                 val maxR = size.minDimension * 0.40f
@@ -105,16 +110,17 @@ fun BalloonBreathingScreen(onBack: () -> Unit) {
             }
         }
         PhaseLabel(
-            label = if (running || timer.progress > 0f) timer.phase.label else "Ready?",
+            label = if (started) timer.phase.label else "Tap ▶ to start",
             secondsLeft = timer.secondsLeft,
             showCount = running,
         )
         Spacer(Modifier.height(8.dp))
-        Text(breathsText(timer.rounds, "balloon"), style = MaterialTheme.typography.titleMedium)
+        Text(doneText(timer.rounds, "balloon"), style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.weight(1f))
-        PaceSelector(pace, { pace = it; running = false }, color)
-        Spacer(Modifier.height(16.dp))
-        StartPauseRow(running, color, onToggle = { running = !running }, onReset = { running = false; timer.reset() })
-        Spacer(Modifier.height(8.dp))
+        BreathingControls(
+            pace = pace, onPace = { pace = it; running = false },
+            running = running, started = started, color = tool.color, deep = tool.deep,
+            onToggle = { running = !running }, onReset = { running = false; timer.reset() },
+        )
     }
 }

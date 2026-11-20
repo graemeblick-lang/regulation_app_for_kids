@@ -51,19 +51,19 @@ fun HomeScreen(
             Text("Calm Corner", style = MaterialTheme.typography.displaySmall)
             Spacer(Modifier.height(4.dp))
             Text(
-                "A quiet place to help your body and mind feel steady.",
+                "Your calm place.",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.height(20.dp))
-            Text("How are you feeling right now?", style = MaterialTheme.typography.titleMedium)
+            Text("How do you feel?", style = MaterialTheme.typography.titleLarge)
             Spacer(Modifier.height(8.dp))
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Feeling.entries.forEach { f ->
                     FilterChip(
                         selected = f == feeling,
                         onClick = { onFeelingChange(if (f == feeling) null else f) },
-                        label = { Text("${f.emoji}  ${f.label}", fontSize = 16.sp) },
+                        label = { Text("${f.emoji}  ${f.label}", style = MaterialTheme.typography.bodyLarge) },
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
                         ),
@@ -85,17 +85,17 @@ fun HomeScreen(
             }
         }
         if (suggested.isNotEmpty()) {
-            item { SectionTitle("Try one of these") }
+            item { SectionTitle("Try these") }
             items(suggested, key = { "s-" + it.name }) { ToolCard(it, highlighted = true, onClick = { onOpenTool(it) }) }
-            item { SectionTitle("More tools") }
+            item { SectionTitle("More") }
         } else {
-            item { SectionTitle("Tools") }
+            item { SectionTitle("Calm tools") }
         }
         items(others, key = { it.name }) { ToolCard(it, highlighted = false, onClick = { onOpenTool(it) }) }
         item {
             Spacer(Modifier.height(12.dp))
             Text(
-                "If you ever feel unsafe or the big feelings don't go away, talk to a grown-up you trust.",
+                "Still feel big feelings? Talk to a grown-up you trust. 💛",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -105,7 +105,7 @@ fun HomeScreen(
 
 @Composable
 private fun SectionTitle(text: String) {
-    Text(text, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 12.dp))
+    Text(text, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 12.dp))
 }
 
 @Composable

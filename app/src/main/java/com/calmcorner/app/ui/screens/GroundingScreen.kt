@@ -38,23 +38,27 @@ import com.calmcorner.app.data.Tool
 private data class SenseStep(val count: Int, val emoji: String, val sense: String, val hint: String)
 
 private val senseSteps = listOf(
-    SenseStep(5, "👀", "see", "Look around slowly. A cloud, a book, your shoes, something blue…"),
-    SenseStep(4, "✋", "touch", "Your clothes, the floor, a soft toy, your own hair…"),
-    SenseStep(3, "👂", "hear", "Listen carefully. Birds, a fan, cars, your own breathing…"),
-    SenseStep(2, "👃", "smell", "Your sleeve, the air, soap on your hands… or a smell you love."),
-    SenseStep(1, "👅", "taste", "What can you taste right now? Or think of your favourite food."),
+    SenseStep(5, "👀", "see", "A book? Your shoes? Something blue?"),
+    SenseStep(4, "✋", "touch", "Your clothes? The floor? Your hair?"),
+    SenseStep(3, "👂", "hear", "A bird? A car? Your breathing?"),
+    SenseStep(2, "👃", "smell", "Your sleeve? Soap? The air?"),
+    SenseStep(1, "👅", "taste", "What can you taste? Or think of a food you love."),
 )
 
 @Composable
 fun GroundingScreen(onBack: () -> Unit) {
-    val color = Tool.Grounding.color
+    val tool = Tool.Grounding
+    val color = tool.color
     var step by rememberSaveable { mutableIntStateOf(0) }
     var found by rememberSaveable { mutableIntStateOf(0) }
     val haptic = LocalHapticFeedback.current
 
     com.calmcorner.app.ui.components.ToolScaffold(
-        title = Tool.Grounding.title,
-        instructions = "Use your senses to come back to right here, right now. Tap a circle each time you notice something.",
+        title = tool.title,
+        tip = "Find things around you.",
+        howTo = "Look, touch and listen.\nEach time you find something, tap a circle.",
+        color = tool.deep,
+        showTip = step == 0 && found == 0,
         onBack = onBack,
     ) {
         AnimatedContent(targetState = step, label = "grounding-step", modifier = Modifier.weight(1f)) { s ->
@@ -66,7 +70,7 @@ fun GroundingScreen(onBack: () -> Unit) {
                     Text("You did it!", style = MaterialTheme.typography.headlineMedium)
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        "You noticed 15 things around you. Take one more big, slow breath. How does your body feel now?",
+                        "You found 15 things. Take one big, slow breath.",
                         style = MaterialTheme.typography.bodyLarge,
                         textAlign = TextAlign.Center,
                     )
@@ -78,7 +82,7 @@ fun GroundingScreen(onBack: () -> Unit) {
                     Text(item.emoji, fontSize = 80.sp)
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        "Find ${item.count} ${if (item.count == 1) "thing" else "things"} you can ${item.sense.uppercase()}",
+                        "Find ${item.count} ${if (item.count == 1) "thing" else "things"} you can ${item.sense}",
                         style = MaterialTheme.typography.headlineMedium,
                         textAlign = TextAlign.Center,
                     )
@@ -93,13 +97,13 @@ fun GroundingScreen(onBack: () -> Unit) {
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         repeat(item.count) { i ->
                             val filled = i < found
-                            val bg by animateColorAsState(if (filled) color else Color.Transparent, label = "dot")
+                            val bg by animateColorAsState(if (filled) tool.deep else Color.Transparent, label = "dot")
                             Box(
                                 contentAlignment = Alignment.Center,
                                 modifier = Modifier
                                     .size(52.dp)
                                     .background(bg, CircleShape)
-                                    .border(3.dp, color, CircleShape)
+                                    .border(3.dp, tool.deep, CircleShape)
                                     .semantics { contentDescription = if (filled) "Found ${i + 1}" else "Not found yet" }
                                     .clickable {
                                         if (i == found && found < item.count) {
@@ -127,15 +131,15 @@ fun GroundingScreen(onBack: () -> Unit) {
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                 } else { step++; found = 0 }
             },
-            colors = ButtonDefaults.buttonColors(containerColor = color, contentColor = Color.White),
-            modifier = Modifier.fillMaxWidth().height(56.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = tool.deep, contentColor = Color.White),
+            modifier = Modifier.fillMaxWidth().height(60.dp),
         ) {
             Text(
                 when {
-                    done -> "Back to Calm Corner"
-                    current != null && found < current.count -> "I found one!"
-                    step == senseSteps.lastIndex -> "Finish"
-                    else -> "Next sense →"
+                    done -> "🏠  Home"
+                    current != null && found < current.count -> "👍  I found one!"
+                    step == senseSteps.lastIndex -> "⭐  Finish"
+                    else -> "Next  →"
                 },
                 style = MaterialTheme.typography.labelLarge,
             )

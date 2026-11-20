@@ -32,16 +32,17 @@ import com.calmcorner.app.ui.components.TimedPhase
 import com.calmcorner.app.ui.components.ToolScaffold
 import com.calmcorner.app.ui.components.rememberPhaseBuzz
 import com.calmcorner.app.ui.components.rememberPhaseTimer
+import com.calmcorner.app.ui.components.tapToToggle
 
 private data class BodyPart(val emoji: String, val squeeze: String, val relax: String)
 
 private val bodyParts = listOf(
-    BodyPart("✊", "Squeeze your hands into tight fists, like squeezing a lemon", "Let go… drop the lemon. Feel your hands go soft"),
-    BodyPart("💪", "Make strong arms, pull your elbows in tight", "Let your arms flop down like wet spaghetti"),
-    BodyPart("🐢", "Lift your shoulders up to your ears like a turtle hiding", "Drop your shoulders down. The turtle comes out"),
-    BodyPart("😖", "Scrunch up your whole face, like you smelled something yucky", "Let your face go smooth and floppy"),
-    BodyPart("🐘", "Make your tummy hard, like an elephant might step on it", "Elephant's gone! Let your tummy relax"),
-    BodyPart("🦶", "Push your toes down into the floor, like squishing mud", "Wiggle your toes and let them rest"),
+    BodyPart("✊", "Squeeze your hands tight", "Let go. Soft hands."),
+    BodyPart("💪", "Make strong arms", "Let your arms flop."),
+    BodyPart("🐢", "Shoulders up to your ears", "Drop your shoulders."),
+    BodyPart("😖", "Scrunch up your face", "Soft, smooth face."),
+    BodyPart("🐘", "Make your tummy hard", "Soft tummy."),
+    BodyPart("🦶", "Push your toes down", "Wiggle your toes. Rest."),
 )
 
 private val squeezePhases = bodyParts.flatMap {
@@ -53,7 +54,8 @@ private val squeezePhases = bodyParts.flatMap {
 
 @Composable
 fun SqueezeRelaxScreen(onBack: () -> Unit) {
-    val color = Tool.SqueezeRelax.color
+    val tool = Tool.SqueezeRelax
+    val color = tool.color
     var running by rememberSaveable { mutableStateOf(false) }
     val timer = rememberPhaseTimer(squeezePhases, running, loop = false, onPhaseStart = rememberPhaseBuzz())
     KeepScreenOn()
@@ -68,16 +70,19 @@ fun SqueezeRelaxScreen(onBack: () -> Unit) {
     )
 
     ToolScaffold(
-        title = Tool.SqueezeRelax.title,
-        instructions = "Squeeze each part of your body tight for 5 seconds, then let it go completely. Notice how different relaxed feels.",
+        title = tool.title,
+        tip = "Squeeze tight. Then let go.",
+        howTo = "We go through your body, one part at a time.\n💪 Squeeze for 5 seconds.\n😌 Then let it go floppy.",
+        color = tool.deep,
+        showTip = !running && !timer.finished,
         onBack = onBack,
     ) {
         Spacer(Modifier.weight(1f))
-        Box(contentAlignment = Alignment.Center, modifier = Modifier.size(240.dp)) {
+        Box(contentAlignment = Alignment.Center, modifier = Modifier.size(240.dp).tapToToggle { if (!timer.finished) running = !running }) {
             CircularProgressIndicator(
                 progress = { if (timer.finished) 1f else timer.progress },
                 color = color,
-                trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                trackColor = color.copy(alpha = 0.25f),
                 strokeWidth = 12.dp,
                 modifier = Modifier.size(240.dp),
             )
@@ -88,15 +93,15 @@ fun SqueezeRelaxScreen(onBack: () -> Unit) {
             timer.finished -> {
                 Text("All done!", style = MaterialTheme.typography.headlineMedium)
                 Text(
-                    "Your whole body has had a squeeze and a rest. Notice how calm and heavy it feels.",
+                    "Your body had a squeeze and a rest.",
                     style = MaterialTheme.typography.bodyLarge,
                     textAlign = TextAlign.Center,
                 )
             }
-            !started -> Text("Ready when you are", style = MaterialTheme.typography.headlineMedium)
+            !started -> Text("Tap ▶ to start", style = MaterialTheme.typography.headlineMedium)
             else -> {
                 Text(
-                    if (squeezing) "Squeeze… ${timer.secondsLeft}" else "Relax…",
+                    if (squeezing) "Squeeze! ${timer.secondsLeft}" else "Relax…",
                     style = MaterialTheme.typography.headlineMedium,
                 )
                 Spacer(Modifier.height(8.dp))
@@ -113,11 +118,11 @@ fun SqueezeRelaxScreen(onBack: () -> Unit) {
         if (timer.finished) {
             Button(
                 onClick = onBack,
-                colors = ButtonDefaults.buttonColors(containerColor = color, contentColor = Color.White),
-                modifier = Modifier.fillMaxWidth().height(56.dp),
-            ) { Text("Back to Calm Corner", style = MaterialTheme.typography.labelLarge) }
+                colors = ButtonDefaults.buttonColors(containerColor = tool.deep, contentColor = Color.White),
+                modifier = Modifier.fillMaxWidth().height(60.dp),
+            ) { Text("🏠  Home", style = MaterialTheme.typography.labelLarge) }
         } else {
-            StartPauseRow(running, color, onToggle = { running = !running }, onReset = { running = false; timer.reset() })
+            StartPauseRow(running, started, tool.deep, onToggle = { running = !running }, onReset = { running = false; timer.reset() })
         }
         Spacer(Modifier.height(8.dp))
     }
