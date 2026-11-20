@@ -53,6 +53,11 @@ class CalmPrefs(context: Context) {
     /** Number of beats spent slowing down. */
     fun drumSlowBeats(): Int = when (drumLength) { 0 -> 24; 2 -> 60; else -> 40 }
 
+    /** Which voice speaks (grown-ups choose). */
+    var voicePreset by mutableStateOf(VoicePreset.fromName(prefs.getString("voice_preset", null)))
+        private set
+    fun updateVoicePreset(v: VoicePreset) { voicePreset = v; prefs.edit { putString("voice_preset", v.name) } }
+
     fun updateBubbleMotion(v: Int) { bubbleMotion = v; prefs.edit { putInt("bubble_motion", v) } }
     fun updateBalloonColor(v: Int) { balloonColor = v; prefs.edit { putInt("balloon_color", v) } }
 

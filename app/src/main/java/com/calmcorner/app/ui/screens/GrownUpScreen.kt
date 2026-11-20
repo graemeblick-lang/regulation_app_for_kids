@@ -46,6 +46,17 @@ import com.calmcorner.app.data.Tool
 import com.calmcorner.app.data.Zone
 import com.calmcorner.app.data.summarise
 import com.calmcorner.app.ui.components.LocalVoice
+import com.calmcorner.app.ui.components.VoiceMatch
+import com.calmcorner.app.data.VoicePreset
+import android.content.Context
+import android.content.Intent
+import android.provider.Settings
+import android.speech.tts.TextToSpeech
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.material3.RadioButton
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.unit.sp
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -116,6 +127,30 @@ fun GrownUpScreen(onBack: () -> Unit) {
                     prefs.updateVoice(it); if (!it) voice?.stop()
                 }
                 SwitchRow("Vibration", "A gentle buzz at each step.", prefs.vibrationOn) { prefs.updateVibration(it) }
+            }
+
+            Section("Voice") {
+                Text("Pick who speaks. Tap ▶ to hear it. Used everywhere the app talks.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(Modifier.height(6.dp))
+                VoicePreset.entries.forEach { preset ->
+                    val match = voice?.matchFor(preset) ?: VoiceMatch.Missing
+                    VoiceRow(
+                        preset = preset,
+                        selected = prefs.voicePreset == preset,
+                        match = if (voice?.ready == true) match else null,
+                        onSelect = { prefs.updateVoicePreset(preset) },
+                        onPreview = { voice?.speak("Hello. Breathe in slowly. And breathe out.", preset) },
+                    )
+                }
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    "Voices come from the phone's own text-to-speech. Girl and Boy are adult voices made higher. " +
+                        "\"Closest match\" means this phone doesn't have that exact voice. You can download more voices for free:",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                val context = LocalContext.current
+                OutlinedButton(onClick = { openTtsSettings(context) }) { Text("Get more voices") }
             }
 
             Section("Breathing") {
@@ -227,4 +262,54 @@ private fun ChipRow(options: List<Pair<Int, String>>, selected: Int, onSelect: (
 @Composable
 private fun ZoneDot(zone: Zone?) {
     Box(Modifier.size(18.dp).background(zone?.color ?: Color(0xFFBDBDBD), CircleShape))
+}
+
+@Composable
+private fun VoiceRow(preset: VoicePreset, selected: Boolean, match: VoiceMatch?, onSelect: () -> Unit, onPreview: () -> Unit) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .selectable(selected = selected, role = Role.RadioButton, onClick = onSelect)
+            .padding(vertical = 2.dp),
+    ) {
+        RadioButton(selected = selected, onClick = null)
+        Spacer(Modifier.width(6.dp))
+        Text(preset.emoji, fontSize = 22.sp)
+        Spacer(Modifier.width(8.dp))
+        Column(Modifier.weight(1f)) {
+            Text(preset.title, style = MaterialTheme.typography.bodyLarge)
+            val status = when (match) {
+                VoiceMatch.Exact -> "✓ On this phone"
+                VoiceMatch.Closest -> "Closest match"
+                VoiceMatch.Missing -> "Not on this phone"
+                null -> ""
+            }
+            Text(
+                listOf(preset.accent, status).filter { it.isNotEmpty() }.joinToString(" · "),
+                style = MaterialTheme.typography.bodySmall,
+                color = if (match == VoiceMatch.Missing) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        IconButton(onClick = onPreview, enabled = match != VoiceMatch.Missing) {
+            Text("▶", fontSize = 20.sp)
+        }
+    }
+}
+
+/** Opens the phone's text-to-speech settings, where more voices can be downloaded. */
+private fun openTtsSettings(context: Context) {
+    val intents = listOf(
+        Intent("com.android.settings.TTS_SETTINGS"),
+        Intent(TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA),
+        Intent(Settings.ACTION_SETTINGS),
+    )
+    for (intent in intents) {
+        try {
+            context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            return
+        } catch (e: Exception) {
+            // try the next one
+        }
+    }
 }
