@@ -21,6 +21,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
@@ -35,6 +36,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.calmcorner.app.data.Tool
 import com.calmcorner.app.ui.components.KeepScreenOn
 import com.calmcorner.app.ui.components.PhaseKind
@@ -53,7 +55,7 @@ enum class BodyPart(val squeeze: String, val relax: String) {
     Hands("Squeeze your hands tight", "Let go. Soft hands."),
     Arms("Make strong arms", "Let your arms flop."),
     Shoulders("Shoulders up to your ears", "Drop your shoulders."),
-    Face("Scrunch up your face", "Soft, smooth face."),
+    Face("Make a sour lemon face! 🍋", "Soft face. Big smile."),
     Tummy("Make your tummy hard", "Soft tummy."),
     Feet("Push your feet down hard", "Wiggle your toes. Rest."),
 }
@@ -92,15 +94,30 @@ fun SqueezeRelaxScreen(onBack: () -> Unit) {
             modifier = Modifier.fillMaxWidth(0.75f).aspectRatio(220f / 260f)
                 .tapToToggle { if (!timer.finished) running = !running },
         ) {
-            BodyFigure(
-                part = if (started && !timer.finished) part else null,
-                tension = tension,
-                soft = tool.color.copy(alpha = 0.35f),
-                mid = tool.color,
-                deep = tool.deep,
-                face = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.matchParentSize(),
-            )
+            if (started && !timer.finished && part == BodyPart.Face) {
+                // Zoom in on the face so the expression is big and easy to copy.
+                BigFace(
+                    tension = tension,
+                    skin = tool.color.copy(alpha = 0.75f),
+                    ink = Color(0xFF3A3350),
+                    modifier = Modifier.matchParentSize(),
+                )
+                Text(
+                    "🍋",
+                    fontSize = 56.sp,
+                    modifier = Modifier.align(Alignment.TopEnd).alpha(tension),
+                )
+            } else {
+                BodyFigure(
+                    part = if (started && !timer.finished) part else null,
+                    tension = tension,
+                    soft = tool.color.copy(alpha = 0.35f),
+                    mid = tool.color,
+                    deep = tool.deep,
+                    face = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.matchParentSize(),
+                )
+            }
         }
         Spacer(Modifier.height(16.dp))
         when {
@@ -308,6 +325,72 @@ private fun DrawScope.drawFace(head: Offset, u: Float, w: Float, h: Float, faceS
             val my = head.y + 0.025f * h
             drawArc(ink, startAngle = 36f, sweepAngle = 108f, useCenter = false,
                 topLeft = Offset(head.x - mr, my - mr), size = Size(mr * 2, mr * 2), style = Stroke(sw, cap = StrokeCap.Round))
+        }
+    }
+}
+
+/**
+ * Close-up face for the "face" step: a sour-lemon scrunch when squeezing
+ * (eyes shut tight with crinkles, wrinkled nose, puckered lips) and a soft
+ * smile when relaxing. Ported from a browser mock-up that was checked visually.
+ */
+@Composable
+private fun BigFace(tension: Float, skin: Color, ink: Color, modifier: Modifier = Modifier) {
+    Canvas(modifier) {
+        val u = min(size.width, size.height)
+        val cx = size.width / 2f
+        val cy = size.height * 0.52f
+        val r = 0.40f * u
+        val line = Stroke(0.025f * u, cap = StrokeCap.Round, join = StrokeJoin.Round)
+        val thin = Stroke(0.016f * u, cap = StrokeCap.Round, join = StrokeJoin.Round)
+        drawCircle(skin, r, Offset(cx, cy))
+
+        // Rosy cheeks, pushed up a little when scrunching
+        val cheek = Color(0xFFFFA0B9).copy(alpha = 0.45f + 0.4f * tension)
+        listOf(-1f, 1f).forEach { s ->
+            val c = Offset(cx + s * 0.20f * u, cy + (0.09f - 0.03f * tension) * u)
+            drawOval(cheek, topLeft = Offset(c.x - 0.06f * u, c.y - 0.04f * u), size = Size(0.12f * u, 0.08f * u))
+        }
+
+        val ex = 0.14f * u
+        val ey = cy - 0.06f * u
+        if (tension > 0.5f) {
+            listOf(-1f, 1f).forEach { s ->
+                val x = cx + s * ex
+                val a = 0.045f * u
+                val b = 0.035f * u
+                // Eyes squeezed shut: > <
+                drawPath(Path().apply { moveTo(x + s * a, ey - b); lineTo(x - s * a, ey); lineTo(x + s * a, ey + b) }, ink, style = line)
+                // Crinkles at the outer corners
+                listOf(-1f, 0f, 1f).forEach { k ->
+                    drawLine(ink, Offset(x + s * 0.07f * u, ey + k * 0.03f * u), Offset(x + s * 0.10f * u, ey + k * 0.045f * u),
+                        strokeWidth = 0.016f * u, cap = StrokeCap.Round)
+                }
+                // Eyebrows pulled down, kept level so it doesn't look cross
+                drawLine(ink, Offset(cx + s * 0.07f * u, ey - 0.085f * u), Offset(cx + s * 0.20f * u, ey - 0.085f * u),
+                    strokeWidth = 0.025f * u, cap = StrokeCap.Round)
+            }
+            // Wrinkled nose
+            listOf(0f, 1f).forEach { k ->
+                val y = cy + k * 0.025f * u
+                drawPath(Path().apply { moveTo(cx - 0.03f * u, y); quadraticTo(cx, y - 0.012f * u, cx + 0.03f * u, y) }, ink, style = thin)
+            }
+            // Puckered lips
+            drawOval(Color(0xFFC2577A), topLeft = Offset(cx - 0.035f * u, cy + 0.14f * u), size = Size(0.07f * u, 0.06f * u))
+        } else {
+            listOf(-1f, 1f).forEach { s ->
+                // Soft closed happy eyes
+                val er = 0.045f * u
+                drawArc(ink, 207f, 126f, false, Offset(cx + s * ex - er, ey - er), Size(er * 2, er * 2), style = line)
+                // Relaxed raised eyebrows
+                drawPath(Path().apply {
+                    moveTo(cx + s * 0.08f * u, ey - 0.12f * u)
+                    quadraticTo(cx + s * 0.14f * u, ey - 0.15f * u, cx + s * 0.20f * u, ey - 0.12f * u)
+                }, ink, style = line)
+            }
+            // Big smile
+            val mr = 0.10f * u
+            drawArc(ink, 36f, 108f, false, Offset(cx - mr, cy + 0.08f * u - mr), Size(mr * 2, mr * 2), style = line)
         }
     }
 }
