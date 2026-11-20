@@ -31,6 +31,13 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import android.content.Context
+import android.media.AudioAttributes
+import android.media.SoundPool
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.ui.platform.LocalContext
+import com.calmcorner.app.R
+import com.calmcorner.app.data.LocalPrefs
 import com.calmcorner.app.data.Tool
 import com.calmcorner.app.ui.components.ToolScaffold
 import com.calmcorner.app.ui.components.rememberCues
@@ -61,10 +68,14 @@ private class BubbleField {
     // Random phases/speeds so every bubble drifts differently.
     val ph = FloatArray(TOTAL * 4) { Random.nextFloat() }
 
+    /** Grown-up setting: 0 = still, 1 = calm, 2 = lively. */
+    var motion = 1
+
     /** How far bubbles drift: a little at first, more as fewer are left. */
     fun driftAmount(cell: Float): Float {
         val gone = 1f - left.toFloat() / TOTAL
-        return cell * (0.035f + 0.17f * gone)
+        val scale = when (motion) { 0 -> 0f; 2 -> 1.7f; else -> 1f }
+        return cell * (0.035f + 0.17f * gone) * scale
     }
 
     fun centre(i: Int, cell: Float): Offset {
@@ -91,7 +102,10 @@ private class BubbleField {
 fun BubblePopScreen(onBack: () -> Unit, onFinish: () -> Unit) {
     val tool = Tool.BubblePop
     val cues = rememberCues()
+    val prefs = LocalPrefs.current
     val field = remember { BubbleField() }
+    field.motion = prefs.bubbleMotion
+    val popSound = rememberPopSound()
     val allPopped = field.left == 0
 
     // Animation clock.
@@ -134,6 +148,7 @@ fun BubblePopScreen(onBack: () -> Unit, onFinish: () -> Unit) {
                             field.popTime[best] = field.time
                             field.left--
                             cues.buzz()
+                            if (prefs.voiceOn) popSound.play()
                             if (field.left == 0) cues.say("All popped. Well done")
                         }
                     }
@@ -147,7 +162,7 @@ fun BubblePopScreen(onBack: () -> Unit, onFinish: () -> Unit) {
                 val centre = field.centre(i, cell)
                 if (!field.popped[i]) {
                     val grow = easeOutBack(((t - field.spawnTime[i]) / 0.35f).coerceIn(0f, 1f))
-                    val wobble = 1f + 0.035f * sin(t * 2.2f + field.ph[i * 4] * 6f)
+                    val wobble = if (field.motion == 0) 1f else 1f + 0.035f * sin(t * 2.2f + field.ph[i * 4] * 6f)
                     drawBubble(centre, r * grow * wobble, color)
                 } else {
                     val p = (t - field.popTime[i]) / BURST_SECONDS
@@ -224,4 +239,32 @@ private fun DrawScope.drawBurst(c: Offset, r: Float, color: Color, p: Float, pha
         drawLine(Color.White.copy(alpha = 0.9f * fade), Offset(c.x - s, c.y), Offset(c.x + s, c.y), strokeWidth = r * 0.07f)
         drawLine(Color.White.copy(alpha = 0.9f * fade), Offset(c.x, c.y - s), Offset(c.x, c.y + s), strokeWidth = r * 0.07f)
     }
+}
+
+/** A soft "bloop" (generated tone, no recording), played at a slightly different pitch each time. */
+private class PopSound(context: Context) {
+    private val pool = SoundPool.Builder()
+        .setMaxStreams(4)
+        .setAudioAttributes(
+            AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_GAME)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .build(),
+        )
+        .build()
+    private val id = pool.load(context, R.raw.pop, 1)
+
+    fun play() {
+        pool.play(id, 0.7f, 0.7f, 1, 0, 0.85f + Random.nextFloat() * 0.4f)
+    }
+
+    fun release() = pool.release()
+}
+
+@Composable
+private fun rememberPopSound(): PopSound {
+    val context = LocalContext.current
+    val sound = remember { PopSound(context.applicationContext) }
+    DisposableEffect(Unit) { onDispose { sound.release() } }
+    return sound
 }

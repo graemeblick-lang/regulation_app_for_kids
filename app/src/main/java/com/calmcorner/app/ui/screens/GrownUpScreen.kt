@@ -112,7 +112,7 @@ fun GrownUpScreen(onBack: () -> Unit) {
 
             // ---- Settings ----
             Section("Sound and vibration") {
-                SwitchRow("Voice guidance", "Speaks each step. There is also a 🔊 button on every exercise.", prefs.voiceOn) {
+                SwitchRow("Sound", "Voice guidance and bubble pops. There is also a 🔊 button on every exercise.", prefs.voiceOn) {
                     prefs.updateVoice(it); if (!it) voice?.stop()
                 }
                 SwitchRow("Vibration", "A gentle buzz at each step.", prefs.vibrationOn) { prefs.updateVibration(it) }
@@ -123,6 +123,13 @@ fun GrownUpScreen(onBack: () -> Unit) {
                 Text("Finger Breathing uses 5 breaths per hand.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(Modifier.height(6.dp))
                 ChipRow(listOf(3 to "3", 5 to "5", 10 to "10", 0 to "Keep going"), prefs.breathsPerSession) { prefs.updateBreaths(it) }
+            }
+
+            Section("Bubble Pop") {
+                Text("Bubble movement", style = MaterialTheme.typography.titleMedium)
+                Text("How much the bubbles drift as fewer are left. Only grown-ups can change this.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(Modifier.height(6.dp))
+                ChipRow(listOf(0 to "Still", 1 to "Calm", 2 to "Lively"), prefs.bubbleMotion) { prefs.updateBubbleMotion(it) }
             }
 
             Section("Look") {

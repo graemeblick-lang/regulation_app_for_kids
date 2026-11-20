@@ -19,6 +19,7 @@ class CalmPrefs(context: Context) {
 
     var theme by mutableStateOf(ThemeMode.entries.getOrElse(prefs.getInt("theme", 0)) { ThemeMode.System })
         private set
+    /** All app sound: voice guidance and bubble pops. Also toggled by the 🔊 button. */
     var voiceOn by mutableStateOf(prefs.getBoolean("voice", true))
         private set
     var vibrationOn by mutableStateOf(prefs.getBoolean("vibration", true))
@@ -30,11 +31,15 @@ class CalmPrefs(context: Context) {
         private set
     var balloonColor by mutableIntStateOf(prefs.getInt("balloon_color", 0))
         private set
+    /** Bubble Pop movement, set by grown-ups only: 0 = still, 1 = calm, 2 = lively. */
+    var bubbleMotion by mutableIntStateOf(prefs.getInt("bubble_motion", 1))
+        private set
 
     fun updateTheme(v: ThemeMode) { theme = v; prefs.edit { putInt("theme", v.ordinal) } }
     fun updateVoice(v: Boolean) { voiceOn = v; prefs.edit { putBoolean("voice", v) } }
     fun updateVibration(v: Boolean) { vibrationOn = v; prefs.edit { putBoolean("vibration", v) } }
     fun updateBreaths(v: Int) { breathsPerSession = v; prefs.edit { putInt("breaths", v) } }
+    fun updateBubbleMotion(v: Int) { bubbleMotion = v; prefs.edit { putInt("bubble_motion", v) } }
     fun updateBalloonColor(v: Int) { balloonColor = v; prefs.edit { putInt("balloon_color", v) } }
 
     fun setToolHidden(tool: Tool, hidden: Boolean) {
