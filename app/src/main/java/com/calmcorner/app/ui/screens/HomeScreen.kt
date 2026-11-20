@@ -1,7 +1,6 @@
 package com.calmcorner.app.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.ExperimentalLayoutApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -34,7 +33,6 @@ import androidx.compose.ui.unit.sp
 import com.calmcorner.app.data.Feeling
 import com.calmcorner.app.data.Tool
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun HomeScreen(
     feeling: Feeling?,
