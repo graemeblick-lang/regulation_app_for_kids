@@ -22,7 +22,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.contentDescription
@@ -38,6 +44,9 @@ import com.calmcorner.app.ui.components.ToolScaffold
 import com.calmcorner.app.ui.components.rememberCues
 import com.calmcorner.app.ui.components.rememberSoundBank
 import kotlinx.coroutines.isActive
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
 
 private enum class DrumStage { Find, Follow, Breathe, Done }
 
@@ -177,26 +186,46 @@ fun CalmDrumScreen(onBack: () -> Unit, onFinish: () -> Unit) {
                 val pos = ((s.breathBeat - 1 + BREATH_CYCLE) % BREATH_CYCLE + frac) / BREATH_CYCLE * 3f // 0..3 (in = 0..1, out = 1..3)
                 if (pos < 1f) 0.86f + 0.12f * pos else 0.98f - 0.12f * ((pos - 1f) / 2f)
             } else 0.92f
-            val r = maxR * 0.78f * breathScale
+            val r = maxR * 0.82f * breathScale
 
             // Guide beat: a soft ring that swells out from the drum on each beat.
             val bp = (t - s.lastBeat) / 0.7f
             if (bp in 0f..1f) {
-                drawCircle(tool.deep.copy(alpha = 0.45f * (1f - bp)), r * (1.02f + 0.20f * bp), c, style = Stroke(10.dp.toPx() * (1f - bp) + 1f))
+                drawCircle(tool.deep.copy(alpha = 0.45f * (1f - bp)), r * (1.03f + 0.18f * bp), c, style = Stroke(10.dp.toPx() * (1f - bp) + 1f))
             }
-            // Drum
-            drawCircle(tool.color.copy(alpha = 0.30f), r, c)
-            drawCircle(tool.deep.copy(alpha = 0.85f), r, c, style = Stroke(8.dp.toPx()))
-            drawCircle(tool.color.copy(alpha = 0.25f), r * 0.55f, c)
-            // Beat flash on the skin
-            if (bp in 0f..0.4f) drawCircle(tool.color.copy(alpha = 0.25f * (1f - bp / 0.4f)), r, c)
-            // Subtle glow when her tap lands in time (no score, just a nice feeling)
-            val gp = (t - s.glow) / 0.35f
-            if (gp in 0f..1f) drawCircle(Color.White.copy(alpha = 0.35f * (1f - gp)), r * 0.95f, c)
-            // Ripple from her finger
-            val tp = (t - s.lastTap) / 0.5f
-            if (tp in 0f..1f) {
-                drawCircle(tool.deep.copy(alpha = 0.6f * (1f - tp)), maxR * 0.45f * tp + 4f, s.lastTapPos, style = Stroke(5.dp.toPx() * (1f - tp) + 1f))
+            drawHandDrum(c, r)
+            val skinR = r * 0.82f
+            val skin = Path().apply { addOval(Rect(c, skinR)) }
+            clipPath(skin) {
+                // Beat flash: the skin brightens softly on each guide beat
+                if (bp in 0f..0.4f) drawCircle(Color.White.copy(alpha = 0.28f * (1f - bp / 0.4f)), skinR, c)
+                // Subtle glow when her tap lands in time (no score, just a nice feeling)
+                val gp = (t - s.glow) / 0.35f
+                if (gp in 0f..1f) drawCircle(Color.White.copy(alpha = 0.30f * (1f - gp)), skinR, c)
+                // Where her finger hits: the skin dips (a soft dark spot that springs back)...
+                val tp = (t - s.lastTap) / 0.6f
+                if (tp in 0f..1f) {
+                    val dentR = r * 0.30f * (1f - 0.4f * tp)
+                    drawCircle(
+                        Brush.radialGradient(
+                            0f to Color(0xFF784F28).copy(alpha = 0.32f * (1f - tp)),
+                            1f to Color.Transparent,
+                            center = s.lastTapPos, radius = dentR,
+                        ),
+                        dentR, s.lastTapPos,
+                    )
+                    // ...and two ripples spread across the skin.
+                    listOf(0f, 0.18f).forEach { delay ->
+                        val q = (tp - delay) / 0.82f
+                        if (q in 0f..1f) {
+                            drawCircle(
+                                Color(0xFF96693C).copy(alpha = 0.45f * (1f - q)),
+                                r * 0.9f * q + 3f, s.lastTapPos,
+                                style = Stroke(4.dp.toPx() * (1f - q) + 1f),
+                            )
+                        }
+                    }
+                }
             }
         }
         Spacer(Modifier.height(16.dp))
@@ -223,5 +252,44 @@ fun CalmDrumScreen(onBack: () -> Unit, onFinish: () -> Unit) {
             Spacer(Modifier.height(56.dp))
         }
         Spacer(Modifier.height(8.dp))
+    }
+}
+
+/**
+ * A wooden hand drum seen from above: shadow, wood rim with grain,
+ * real-looking skin and metal tacks. [r] is the outer radius of the rim.
+ */
+private fun DrawScope.drawHandDrum(c: Offset, r: Float) {
+    // Shadow
+    drawOval(Color.Black.copy(alpha = 0.15f), topLeft = Offset(c.x - r * 0.95f + 6f, c.y + r * 0.98f - r * 0.16f), size = Size(r * 1.9f, r * 0.32f))
+    // Wooden rim
+    drawCircle(
+        Brush.radialGradient(
+            0f to Color(0xFFD9A066), 0.8f to Color(0xFFA9693A), 1f to Color(0xFF7A4A28),
+            center = Offset(c.x - r * 0.3f, c.y - r * 0.3f), radius = r * 1.35f,
+        ),
+        r, c,
+    )
+    for (i in 0 until 5) {
+        drawCircle(Color(0xFF5A3214).copy(alpha = 0.18f), r * (0.88f + i * 0.022f), c, style = Stroke(1.5f))
+    }
+    // Skin
+    val skinR = r * 0.82f
+    drawCircle(
+        Brush.radialGradient(
+            0f to Color(0xFFFFF8EC), 0.7f to Color(0xFFF1E2C6), 1f to Color(0xFFD8C29C),
+            center = Offset(c.x - r * 0.25f, c.y - r * 0.3f), radius = skinR * 1.25f,
+        ),
+        skinR, c,
+    )
+    // Metal tacks around the rim
+    val tackR = r * 0.034f
+    for (i in 0 until 16) {
+        val a = i / 16f * 2f * PI.toFloat()
+        val tc = Offset(c.x + cos(a) * r * 0.91f, c.y + sin(a) * r * 0.91f)
+        drawCircle(
+            Brush.radialGradient(0f to Color.White, 1f to Color(0xFF9A9A9A), center = Offset(tc.x - tackR * 0.4f, tc.y - tackR * 0.4f), radius = tackR * 1.2f),
+            tackR, tc,
+        )
     }
 }

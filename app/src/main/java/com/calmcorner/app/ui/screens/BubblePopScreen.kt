@@ -24,7 +24,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.drawscope.scale
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
@@ -51,7 +56,8 @@ import kotlin.random.Random
 private const val COLS = 5
 private const val ROWS = 6
 private const val TOTAL = COLS * ROWS
-private const val BURST_SECONDS = 0.5f
+private const val BURST_SECONDS = 0.55f
+private const val SQUISH = 0.14f // first part of the pop: a quick squish
 
 private val rowColors = listOf(
     Color(0xFFE57B8D), Color(0xFFF0954A), Color(0xFFF2C94C),
@@ -163,10 +169,15 @@ fun BubblePopScreen(onBack: () -> Unit, onFinish: () -> Unit) {
                 if (!field.popped[i]) {
                     val grow = easeOutBack(((t - field.spawnTime[i]) / 0.35f).coerceIn(0f, 1f))
                     val wobble = if (field.motion == 0) 1f else 1f + 0.035f * sin(t * 2.2f + field.ph[i * 4] * 6f)
-                    drawBubble(centre, r * grow * wobble, color)
+                    drawJelly(centre, r * grow * wobble, color)
                 } else {
                     val p = (t - field.popTime[i]) / BURST_SECONDS
-                    if (p in 0f..1f) drawBurst(centre, r, color, p, field.ph[i * 4 + 1])
+                    if (p in 0f..SQUISH) {
+                        val k = p / SQUISH
+                        drawJelly(centre, r, color, sx = 1f + 0.15f * k, sy = 1f - 0.18f * k)
+                    } else if (p in SQUISH..1f) {
+                        drawBurst(centre, r, color, (p - SQUISH) / (1f - SQUISH), field.ph[i * 4 + 1])
+                    }
                 }
             }
         }
@@ -203,13 +214,46 @@ private fun easeOutBack(x: Float): Float {
     return 1f + c3 * y * y * y + c1 * y * y
 }
 
-/** A shiny bubble: body, soft rim, and two highlights. */
-private fun DrawScope.drawBubble(c: Offset, r: Float, color: Color) {
+/**
+ * A glossy "jelly ball": shaded body, soft rim light, shine and a shadow,
+ * so it looks like a real squishy object. [sx]/[sy] squash it before popping.
+ */
+private fun DrawScope.drawJelly(c: Offset, r: Float, color: Color, sx: Float = 1f, sy: Float = 1f, alpha: Float = 1f) {
     if (r <= 0f) return
-    drawCircle(color.copy(alpha = 0.88f), r, c)
-    drawCircle(Color.White.copy(alpha = 0.25f), r, c, style = Stroke(r * 0.10f))
-    drawCircle(Color.White.copy(alpha = 0.65f), r * 0.20f, Offset(c.x - r * 0.38f, c.y - r * 0.38f))
-    drawCircle(Color.White.copy(alpha = 0.45f), r * 0.09f, Offset(c.x - r * 0.12f, c.y - r * 0.55f))
+    // Shadow on the "floor"
+    drawOval(
+        Color.Black.copy(alpha = 0.12f * alpha),
+        topLeft = Offset(c.x - r * 0.75f * sx + r * 0.08f, c.y + r * 0.92f * sy - r * 0.18f),
+        size = Size(r * 1.5f * sx, r * 0.36f),
+    )
+    scale(sx, sy, pivot = c) {
+        drawCircle(
+            Brush.radialGradient(
+                0f to lerp(color, Color.White, 0.45f),
+                0.55f to color,
+                1f to lerp(color, Color.Black, 0.25f),
+                center = Offset(c.x - r * 0.35f, c.y - r * 0.4f),
+                radius = r * 1.3f,
+            ),
+            r, c, alpha = alpha,
+        )
+        // Soft light bouncing up from below
+        drawCircle(
+            Brush.radialGradient(
+                0f to Color.White.copy(alpha = 0.25f),
+                1f to Color.Transparent,
+                center = Offset(c.x, c.y + r * 0.55f),
+                radius = r * 0.7f,
+            ),
+            r, c, alpha = alpha,
+        )
+        // Shine
+        val hl = Offset(c.x - r * 0.38f, c.y - r * 0.45f)
+        rotate(-34f, pivot = hl) {
+            drawOval(Color.White.copy(alpha = 0.85f * alpha), topLeft = Offset(hl.x - r * 0.26f, hl.y - r * 0.15f), size = Size(r * 0.52f, r * 0.30f))
+        }
+        drawCircle(Color.White.copy(alpha = 0.6f * alpha), r * 0.06f, Offset(c.x - r * 0.12f, c.y - r * 0.62f))
+    }
 }
 
 /**
@@ -221,7 +265,7 @@ private fun DrawScope.drawBurst(c: Offset, r: Float, color: Color, p: Float, pha
     // Swell and vanish (quickly)
     if (p < 0.15f) {
         val q = p / 0.15f
-        drawCircle(color.copy(alpha = 0.88f * (1f - q)), r * (1f + 0.2f * q), c)
+        drawJelly(c, r * (1f + 0.2f * q), color, alpha = 1f - q)
     }
     // Ripple ring
     drawCircle(color.copy(alpha = 0.8f * fade), r * (1f + 0.9f * p), c, style = Stroke(r * 0.14f * fade + 1f))
