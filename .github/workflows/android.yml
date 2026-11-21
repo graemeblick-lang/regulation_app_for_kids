@@ -61,4 +61,8 @@ jobs:
           name: Calm Corner ${{ github.ref_name }}
           body_path: release-notes/${{ github.ref_name }}.md
           make_latest: false
-          files: CalmCorner-${{ github.ref_name }}.apk
+          # Also include CalmCorner.apk so the usual "latest" download link works
+          # even if this release gets marked as Latest on GitHub.
+          files: |
+            CalmCorner-${{ github.ref_name }}.apk
+            CalmCorner.apk
