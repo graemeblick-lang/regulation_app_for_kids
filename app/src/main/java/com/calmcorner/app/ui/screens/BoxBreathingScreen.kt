@@ -17,6 +17,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathMeasure
@@ -73,7 +75,8 @@ fun BoxBreathingScreen(onBack: () -> Unit, onFinish: () -> Unit) {
         Spacer(Modifier.weight(1f))
         Box(
             contentAlignment = Alignment.Center,
-            modifier = Modifier.fillMaxWidth(0.85f).aspectRatio(1f).tapToToggle { running = !running },
+            modifier = Modifier.fillMaxWidth(0.85f).aspectRatio(1f).tapToToggle { running = !running }
+                .semantics { contentDescription = "Square with a moving dot. Tap to start or pause." },
         ) {
             Canvas(Modifier.matchParentSize()) {
                 val stroke = 16.dp.toPx()

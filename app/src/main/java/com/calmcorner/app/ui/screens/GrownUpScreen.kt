@@ -40,6 +40,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.calmcorner.app.data.LocalHistory
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.core.content.ContextCompat
+import com.calmcorner.app.ReminderSlot
+import com.calmcorner.app.Reminders
+import com.calmcorner.app.SummaryPdf
+import com.calmcorner.app.data.LocalCopingCards
+import com.calmcorner.app.data.Photos
 import com.calmcorner.app.data.LocalPrefs
 import com.calmcorner.app.data.ThemeMode
 import com.calmcorner.app.data.Tool
@@ -69,6 +87,21 @@ fun GrownUpScreen(onBack: () -> Unit) {
     val voice = LocalVoice.current
     val summary = summarise(history.records, System.currentTimeMillis())
     var confirmClear by remember { mutableStateOf(false) }
+    val cards = LocalCopingCards.current
+    val context = LocalContext.current
+    var addingCard by remember { mutableStateOf(false) }
+    val pickCalmPicture = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        if (uri != null) Photos.save(context, uri)?.let { name ->
+            prefs.calmPicture?.let { Photos.delete(context, it) }
+            prefs.updateCalmPicture(name)
+        }
+    }
+    // Ask for notification permission (Android 13+) when a reminder is first switched on.
+    var pendingSlot by remember { mutableStateOf<ReminderSlot?>(null) }
+    val askNotify = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        pendingSlot?.let { if (granted) { prefs.setReminder(it.name, true); Reminders.reschedule(context, prefs.reminders) } }
+        pendingSlot = null
+    }
 
     Column(Modifier.fillMaxSize()) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(4.dp)) {
@@ -99,6 +132,72 @@ fun GrownUpScreen(onBack: () -> Unit) {
                 }
                 if (summary.stars == 0) {
                     Text("No exercises yet this week.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Spacer(Modifier.height(8.dp))
+                OutlinedButton(onClick = { SummaryPdf.share(context, history.records) }) { Text("📄 Share weekly summary (PDF)") }
+                Text("For school or a therapist. Only sent where you choose.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+
+            // ---- My calm plan ----
+            Section("Her calm plan") {
+                Text("Add her own calm ideas with a photo, e.g. \"Cuddle the dog\". They show on her home screen.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(Modifier.height(6.dp))
+                cards.cards.forEach { card ->
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                        Thumb(card.photo, 44)
+                        Spacer(Modifier.width(10.dp))
+                        Text(card.text, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+                        IconButton(onClick = { cards.move(card, up = true) }) { Text("↑", fontSize = 20.sp) }
+                        IconButton(onClick = { cards.move(card, up = false) }) { Text("↓", fontSize = 20.sp) }
+                        IconButton(onClick = { cards.remove(card) }) { Text("✕", fontSize = 18.sp) }
+                    }
+                }
+                OutlinedButton(onClick = { addingCard = true }) { Text("+ Add a calm idea") }
+                Spacer(Modifier.height(12.dp))
+                Text("Calm picture", style = MaterialTheme.typography.titleMedium)
+                Text("A photo of her safe place, pet or favourite person. It shows when she picks Red.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 6.dp)) {
+                    Thumb(prefs.calmPicture, 64)
+                    Spacer(Modifier.width(10.dp))
+                    OutlinedButton(onClick = { pickCalmPicture.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }) {
+                        Text(if (prefs.calmPicture == null) "Choose photo" else "Change")
+                    }
+                    if (prefs.calmPicture != null) {
+                        TextButton(onClick = { prefs.calmPicture?.let { Photos.delete(context, it) }; prefs.updateCalmPicture(null) }) { Text("Remove") }
+                    }
+                }
+                if (prefs.calmPicture != null) {
+                    OutlinedTextField(
+                        value = prefs.calmPictureCaption,
+                        onValueChange = { prefs.updateCalmPictureCaption(it.take(40)) },
+                        label = { Text("Words under the picture") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
+                    )
+                }
+            }
+
+            // ---- School and reminders ----
+            Section("School mode") {
+                SwitchRow("School mode", "Silent (no voice or sounds), vibration only. Hides Body Moves and Calm Sounds.", prefs.schoolMode) {
+                    prefs.updateSchoolMode(it); if (it) voice?.stop()
+                }
+            }
+
+            Section("Reminders") {
+                Text("A gentle \"Time for a check-in?\" notification. Set on this phone only.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                ReminderSlot.entries.forEach { slot ->
+                    SwitchRow(slot.label, null, slot.name in prefs.reminders) { on ->
+                        val needsAsk = on && Build.VERSION.SDK_INT >= 33 &&
+                            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+                        if (needsAsk) {
+                            pendingSlot = slot
+                            askNotify.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        } else {
+                            prefs.setReminder(slot.name, on)
+                            Reminders.reschedule(context, prefs.reminders)
+                        }
+                    }
                 }
             }
 
@@ -149,7 +248,6 @@ fun GrownUpScreen(onBack: () -> Unit) {
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                val context = LocalContext.current
                 OutlinedButton(onClick = { openTtsSettings(context) }) { Text("Get more voices") }
             }
 
@@ -190,11 +288,16 @@ fun GrownUpScreen(onBack: () -> Unit) {
 
             Section("Tools to show") {
                 Text("Hide tools she doesn't use. Fewer choices can be easier.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Tool.entries.forEach { tool ->
+                Tool.entries.filter { it.listed }.forEach { tool ->
                     SwitchRow("${tool.emoji} ${tool.title}", null, tool.name !in prefs.hiddenTools) { show ->
                         prefs.setToolHidden(tool, !show)
                     }
                 }
+            }
+
+            Section("Accessibility") {
+                SwitchRow("Reduce movement", "Fewer moving and drifting things on screen.", prefs.reduceMotion) { prefs.updateReduceMotion(it) }
+                SwitchRow("Bigger text and buttons", "Makes everything a bit larger.", prefs.bigger) { prefs.updateBigger(it) }
             }
 
             Section("Privacy") {
@@ -209,6 +312,10 @@ fun GrownUpScreen(onBack: () -> Unit) {
             }
             Spacer(Modifier.height(24.dp))
         }
+    }
+
+    if (addingCard) {
+        AddCardDialog(onDismiss = { addingCard = false }, onSave = { text, photo -> cards.add(text, photo); addingCard = false })
     }
 
     if (confirmClear) {
@@ -312,4 +419,52 @@ private fun openTtsSettings(context: Context) {
             // try the next one
         }
     }
+}
+
+@Composable
+private fun Thumb(photo: String?, sizeDp: Int) {
+    val context = LocalContext.current
+    val bmp = remember(photo) { photo?.let { Photos.load(context, it) } }
+    if (bmp != null) {
+        Image(bmp.asImageBitmap(), contentDescription = null, contentScale = ContentScale.Crop,
+            modifier = Modifier.size(sizeDp.dp).clip(RoundedCornerShape(10.dp)))
+    } else {
+        Box(contentAlignment = Alignment.Center, modifier = Modifier.size(sizeDp.dp).background(Color(0x1A000000), RoundedCornerShape(10.dp))) {
+            Text("💛", fontSize = (sizeDp / 2).sp)
+        }
+    }
+}
+
+@Composable
+private fun AddCardDialog(onDismiss: () -> Unit, onSave: (String, String?) -> Unit) {
+    val context = LocalContext.current
+    var text by remember { mutableStateOf("") }
+    var photo by remember { mutableStateOf<String?>(null) }
+    val pick = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        if (uri != null) Photos.save(context, uri)?.let { name -> photo?.let { Photos.delete(context, it) }; photo = name }
+    }
+    AlertDialog(
+        onDismissRequest = { photo?.let { Photos.delete(context, it) }; onDismiss() },
+        title = { Text("Add a calm idea") },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = text, onValueChange = { text = it.take(40) },
+                    label = { Text("Short and simple, e.g. Cuddle the dog") }, singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(Modifier.height(10.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Thumb(photo, 56)
+                    Spacer(Modifier.width(10.dp))
+                    OutlinedButton(onClick = { pick.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }) {
+                        Text(if (photo == null) "Add photo" else "Change photo")
+                    }
+                }
+                Text("Photos stay on this phone.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        },
+        confirmButton = { TextButton(onClick = { onSave(text, photo) }, enabled = text.isNotBlank()) { Text("Save") } },
+        dismissButton = { TextButton(onClick = { photo?.let { Photos.delete(context, it) }; onDismiss() }) { Text("Cancel") } },
+    )
 }

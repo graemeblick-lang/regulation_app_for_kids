@@ -18,7 +18,15 @@ A simple, calm Android app with tools that help kids and young people regulate b
 | ✨ **Calm Jar** | Shake the phone (or tap Shake) and watch glitter slowly settle. |
 | 🔵 **Bubble Pop** | A grid of bubbles to pop slowly, like a pop-it toy. |
 | 🥁 **Calm Drum** | One big drum for one hand. It picks up her own steady beat, joins in at her speed, slowly slows down, then ends with breathing in time with the drum. No score; always ends slow. |
+| 💓 **Heartbeat Drum** | A slow, soft "lub-dub" drum to breathe with (in for 2 beats, out for 4). Good at bedtime. |
+| 🙌 **Body Moves** | Calming "heavy work": wall push, hand press, chair push, big hug and big stretch, 5 times each, with a drawn figure to copy. |
+| ♾️ **Trace and Breathe** | Trace an infinity loop or a star with a finger, following a dot at breathing pace. The dot glows when her finger is on it. |
+| 🌧️ **Calm Sounds** | Rain, waves or a soft hum made live by the app (no recordings), for 5, 10 or 20 minutes, fading out at the end. |
 | ⏳ **Calm Timer** | 1, 2 or 5 minutes of quiet rest with a slowly pulsing circle. |
+
+**My calm plan:** she stars ☆ her favourite tools, and a grown-up adds her own calm ideas with a photo (e.g. "Cuddle the dog"). These show first on the home screen. A **calm picture** (her safe place, pet or person) appears when she picks Red.
+
+**Body clues:** "How does Red feel in my body?" shows a figure with the body areas lit up, plus simple words (e.g. "My face feels hot").
 
 **Also:**
 - **Voice guidance** (phone's built-in offline text-to-speech) and a soft **pop sound** in Bubble Pop. One 🔊/🔇 button on every exercise silences all sound, and her choice is remembered (e.g. quiet on the bus).
@@ -26,7 +34,7 @@ A simple, calm Android app with tools that help kids and young people regulate b
 - **Remembers** her breathing speed for each tool, her balloon colour and her timer length.
 - **Breaths per session** (3, 5, 10 or keep going), ending with "All done ⭐".
 - **Home-screen widget** ("Calm now"): one tap opens her most-used tool.
-- **Grown-ups area**: press and hold ⚙️ on the home screen for 3 seconds. It shows this week's summary (exercises, how often she felt calmer afterwards, most helpful tool) and recent history with before/after colours. Settings: **choice of voice** (10 voices: friendly woman or man in British, American and Australian accents, Indian woman, girl, boy, deep and calm; each with a preview), sound, vibration, breaths per session, Bubble Pop movement (still, calm or lively), Calm Drum ending speed and length, theme (match phone, light or dark), show or hide tools, clear history.
+- **Grown-ups area**: press and hold ⚙️ on the home screen for 3 seconds. It shows this week's summary (exercises, how often she felt calmer afterwards, most helpful tool) and recent history with before/after colours. Also: **share a weekly summary PDF** (for school or a therapist), **school mode** (silent, vibration only, hides Body Moves and Calm Sounds), **daily reminders** (before school, after school, bedtime), **reduce movement**, and **bigger text and buttons**. Settings: **choice of voice** (10 voices: friendly woman or man in British, American and Australian accents, Indian woman, girl, boy, deep and calm; each with a preview), sound, vibration, breaths per session, Bubble Pop movement (still, calm or lively), Calm Drum ending speed and length, theme (match phone, light or dark), show or hide tools, clear history.
 - **No internet permission, no accounts, no ads, no tracking.** All history stays on the phone.
 
 ## Wording rules

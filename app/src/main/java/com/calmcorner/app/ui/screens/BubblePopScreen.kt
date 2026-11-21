@@ -110,7 +110,7 @@ fun BubblePopScreen(onBack: () -> Unit, onFinish: () -> Unit) {
     val cues = rememberCues()
     val prefs = LocalPrefs.current
     val field = remember { BubbleField() }
-    field.motion = prefs.bubbleMotion
+    field.motion = if (prefs.reduceMotion) 0 else prefs.bubbleMotion
     val popSound = rememberPopSound()
     val allPopped = field.left == 0
 
@@ -154,7 +154,7 @@ fun BubblePopScreen(onBack: () -> Unit, onFinish: () -> Unit) {
                             field.popTime[best] = field.time
                             field.left--
                             cues.buzz()
-                            if (prefs.voiceOn) popSound.play()
+                            if (prefs.soundOn) popSound.play()
                             if (field.left == 0) cues.say("All popped. Well done")
                         }
                     }

@@ -99,13 +99,14 @@ class Cues(private val voice: Voice?, private val prefs: CalmPrefs, private val 
     }
 
     fun say(text: String) {
-        if (prefs.voiceOn) voice?.speak(text, prefs.voicePreset)
+        if (prefs.soundOn) voice?.speak(text, prefs.voicePreset)
     }
 
     /** Called at the start of each breathing / squeeze phase. */
     fun phase(p: TimedPhase) {
         buzz()
-        say(p.spoken ?: p.label)
+        val words = p.spoken ?: p.label
+        if (words.isNotEmpty()) say(words)
     }
 }
 

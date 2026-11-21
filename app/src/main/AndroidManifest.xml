@@ -2,6 +2,10 @@
 <!-- No INTERNET permission: the app works fully offline and collects no data. -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- Gentle check-in reminders (grown-up switches them on), restored after a restart. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
     <!-- Lets the app find the phone's built-in text-to-speech engine (voice guidance). -->
     <queries>
         <intent>
@@ -37,5 +41,22 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/calm_widget_info" />
         </receiver>
+        <receiver android:name=".ReminderReceiver" android:exported="false" />
+        <receiver android:name=".BootReceiver" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Shares the weekly summary PDF only when a grown-up chooses to. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.files"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
     </application>
 </manifest>

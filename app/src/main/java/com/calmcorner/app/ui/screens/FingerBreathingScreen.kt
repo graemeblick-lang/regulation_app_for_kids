@@ -15,6 +15,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
@@ -177,7 +179,8 @@ fun FingerBreathingScreen(onBack: () -> Unit, onFinish: () -> Unit) {
         onBack = onBack,
     ) {
         Spacer(Modifier.weight(1f))
-        Canvas(Modifier.fillMaxWidth(0.82f).aspectRatio(0.9f).tapToToggle { running = !running }) {
+        Canvas(Modifier.fillMaxWidth(0.82f).aspectRatio(0.9f).tapToToggle { running = !running }
+            .semantics { contentDescription = "Hand with a moving dot. Tap to start or pause." }) {
             val outlineW = 8.dp.toPx()
             val traceW = 9.dp.toPx()
             val hand = HandGeometry(size.width, size.height)

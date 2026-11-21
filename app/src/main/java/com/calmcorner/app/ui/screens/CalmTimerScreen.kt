@@ -28,6 +28,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.StrokeCap
@@ -78,7 +80,8 @@ fun CalmTimerScreen(onBack: () -> Unit, onFinish: () -> Unit) {
         onBack = onBack,
     ) {
         Spacer(Modifier.weight(1f))
-        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxWidth(0.8f).aspectRatio(1f).tapToToggle { running = !running }) {
+        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxWidth(0.8f).aspectRatio(1f).tapToToggle { running = !running }
+            .semantics { contentDescription = "Timer circle. Tap to start or pause." }) {
             Canvas(Modifier.matchParentSize()) {
                 val stroke = 16.dp.toPx()
                 val d = size.minDimension - stroke
@@ -86,7 +89,7 @@ fun CalmTimerScreen(onBack: () -> Unit, onFinish: () -> Unit) {
                 drawArc(tool.color.copy(alpha = 0.25f), 0f, 360f, false, tl, Size(d, d), style = Stroke(stroke))
                 // Ring empties as time passes
                 drawArc(tool.deep, -90f, 360f * (1f - timer.progress), false, tl, Size(d, d), style = Stroke(stroke, cap = StrokeCap.Round))
-                val r = (d / 2f - stroke) * (if (running) pulse else 0.7f)
+                val r = (d / 2f - stroke) * (if (running && !prefs.reduceMotion) pulse else 0.7f)
                 drawCircle(tool.color.copy(alpha = 0.35f), r)
             }
             Text(

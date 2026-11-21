@@ -22,7 +22,13 @@ import com.calmcorner.app.data.SessionRecord
 import com.calmcorner.app.data.Tool
 import com.calmcorner.app.data.Zone
 import com.calmcorner.app.ui.components.LocalVoice
+import com.calmcorner.app.data.LocalCopingCards
 import com.calmcorner.app.ui.screens.BalloonBreathingScreen
+import com.calmcorner.app.ui.screens.BodyCluesScreen
+import com.calmcorner.app.ui.screens.BodyMovesScreen
+import com.calmcorner.app.ui.screens.CalmSoundsScreen
+import com.calmcorner.app.ui.screens.CopingCardScreen
+import com.calmcorner.app.ui.screens.TraceBreatheScreen
 import com.calmcorner.app.ui.screens.BoxBreathingScreen
 import com.calmcorner.app.ui.screens.BubblePopScreen
 import com.calmcorner.app.ui.screens.CalmDrumScreen
@@ -41,18 +47,24 @@ private sealed interface Route {
     data object GrownUps : Route
     data class Exercise(val tool: Tool) : Route
     data class CheckIn(val tool: Tool) : Route
+    data class Clues(val zone: Zone) : Route
+    data class Card(val id: String) : Route
 
     fun encode(): String = when (this) {
         Home -> "home"
         GrownUps -> "grownups"
         is Exercise -> "tool:${tool.name}"
         is CheckIn -> "checkin:${tool.name}"
+        is Clues -> "clues:${zone.name}"
+        is Card -> "card:$id"
     }
 
     companion object {
         fun decode(s: String): Route = when {
             s == "grownups" -> GrownUps
             s.startsWith("tool:") -> Tool.entries.firstOrNull { it.name == s.removePrefix("tool:") }?.let { Exercise(it) } ?: Home
+            s.startsWith("clues:") -> Zone.entries.firstOrNull { it.name == s.removePrefix("clues:") }?.let { Clues(it) } ?: Home
+            s.startsWith("card:") -> Card(s.removePrefix("card:"))
             s.startsWith("checkin:") -> Tool.entries.firstOrNull { it.name == s.removePrefix("checkin:") }?.let { CheckIn(it) } ?: Home
             else -> Home
         }
@@ -62,6 +74,7 @@ private sealed interface Route {
 @Composable
 fun CalmApp(openTool: Tool? = null, onOpenToolHandled: () -> Unit = {}) {
     val history = LocalHistory.current
+    val cards = LocalCopingCards.current
     val voice = LocalVoice.current
     var routeName by rememberSaveable { mutableStateOf("home") }
     var zoneName by rememberSaveable { mutableStateOf<String?>(null) }
@@ -96,7 +109,24 @@ fun CalmApp(openTool: Tool? = null, onOpenToolHandled: () -> Unit = {}) {
                         onZoneChange = { zoneName = it?.name },
                         onOpenTool = { openExercise(it) },
                         onOpenGrownUps = { go(Route.GrownUps) },
+                        onOpenCard = { go(Route.Card(it.id)) },
+                        onOpenClues = { go(Route.Clues(it)) },
                     )
+                    is Route.Clues -> BodyCluesScreen(current.zone, onBack = goHome)
+                    is Route.Card -> {
+                        val card = cards.cards.firstOrNull { it.id == current.id }
+                        if (card == null) {
+                            LaunchedEffect(Unit) { goHome() }
+                        } else {
+                            CopingCardScreen(card, onBack = goHome, onDone = {
+                                if (routeName == current.encode()) {
+                                    history.add(SessionRecord(System.currentTimeMillis(), Tool.CopingCard, before = zone, after = null))
+                                    afterName = null
+                                    go(Route.CheckIn(Tool.CopingCard))
+                                }
+                            })
+                        }
+                    }
                     Route.GrownUps -> GrownUpScreen(onBack = goHome)
                     is Route.CheckIn -> CheckInScreen(
                         tool = current.tool,
@@ -127,6 +157,11 @@ fun CalmApp(openTool: Tool? = null, onOpenToolHandled: () -> Unit = {}) {
                             Tool.BubblePop -> BubblePopScreen(goHome, finish)
                             Tool.CalmTimer -> CalmTimerScreen(goHome, finish)
                             Tool.CalmDrum -> CalmDrumScreen(goHome, finish)
+                            Tool.HeartbeatDrum -> CalmDrumScreen(goHome, finish, heartbeat = true)
+                            Tool.BodyMoves -> BodyMovesScreen(goHome, finish)
+                            Tool.TraceBreathe -> TraceBreatheScreen(goHome, finish)
+                            Tool.CalmSounds -> CalmSoundsScreen(goHome, finish)
+                            Tool.CopingCard -> LaunchedEffect(Unit) { goHome() }
                         }
                     }
                 }

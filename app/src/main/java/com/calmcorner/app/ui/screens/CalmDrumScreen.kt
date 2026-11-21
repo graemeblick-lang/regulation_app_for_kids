@@ -68,6 +68,7 @@ private class DrumState {
     var lastTap = -10f
     var lastTapPos = Offset.Zero
     var glow = -10f                   // last time a tap landed on the beat
+    var dubAt = -1f                   // heartbeat mode: when to play the second, softer beat
 }
 
 /**
@@ -77,8 +78,9 @@ private class DrumState {
  * always ends slow, then the usual check-in.
  */
 @Composable
-fun CalmDrumScreen(onBack: () -> Unit, onFinish: () -> Unit) {
-    val tool = Tool.CalmDrum
+fun CalmDrumScreen(onBack: () -> Unit, onFinish: () -> Unit, heartbeat: Boolean = false) {
+    val tool = if (heartbeat) Tool.HeartbeatDrum else Tool.CalmDrum
+    val breathCycles = if (heartbeat) 6 else BREATH_CYCLES
     val prefs = LocalPrefs.current
     val cues = rememberCues()
     val sounds = rememberSoundBank(R.raw.drum, R.raw.tick)
@@ -98,7 +100,11 @@ fun CalmDrumScreen(onBack: () -> Unit, onFinish: () -> Unit) {
 
     fun onBeat() {
         s.lastBeat = s.nextBeat
-        if (prefs.voiceOn && prefs.drumTick) sounds.play(R.raw.tick, 0.5f)
+        if (heartbeat) {
+            // Soft "lub-dub", like a slow resting heartbeat.
+            if (prefs.soundOn) sounds.play(R.raw.drum, 0.55f)
+            s.dubAt = s.lastBeat + 0.24f
+        } else if (prefs.soundOn && prefs.drumTick) sounds.play(R.raw.tick, 0.5f)
         cues.buzz() // lets her feel the beat even with sound off (e.g. on the bus)
         when (s.stage) {
             DrumStage.Follow -> {
@@ -113,7 +119,7 @@ fun CalmDrumScreen(onBack: () -> Unit, onFinish: () -> Unit) {
                     2 -> cues.say("Breathe out")
                 }
                 s.breathBeat++
-                if (s.breathBeat >= BREATH_CYCLE * BREATH_CYCLES) {
+                if (s.breathBeat >= BREATH_CYCLE * breathCycles) {
                     s.stage = DrumStage.Done
                     cues.say("All done")
                 }
@@ -125,9 +131,21 @@ fun CalmDrumScreen(onBack: () -> Unit, onFinish: () -> Unit) {
 
     // Clock + beat scheduler.
     LaunchedEffect(Unit) {
+        if (heartbeat) {
+            // Heartbeat mode skips straight to slow breathing with the drum.
+            s.startBpm = target
+            s.bpm = target
+            s.nextBeat = 1.2f
+            s.stage = DrumStage.Breathe
+            cues.say("Breathe with the drum")
+        }
         val start = withFrameNanos { it }
         while (isActive && s.stage != DrumStage.Done) {
             withFrameNanos { now -> s.time = (now - start) / 1_000_000_000f }
+            if (s.dubAt > 0f && s.time >= s.dubAt) {
+                if (prefs.soundOn) sounds.play(R.raw.drum, 0.35f, rate = 1.12f)
+                s.dubAt = -1f
+            }
             when (s.stage) {
                 DrumStage.Find -> if (s.time > FALLBACK_SECONDS && s.taps.size < 6) {
                     // Not enough taps yet: start a gentle beat for her.
@@ -143,8 +161,9 @@ fun CalmDrumScreen(onBack: () -> Unit, onFinish: () -> Unit) {
 
     ToolScaffold(
         title = tool.title,
-        tip = "Tap the drum. Find your steady beat.",
-        howTo = "Tap the drum with one hand.\nKeep a steady beat.\nThe drum joins in, then slowly gets slower.\nFollow it, then breathe with it.",
+        tip = if (heartbeat) "Breathe with the slow drum." else "Tap the drum. Find your steady beat.",
+        howTo = if (heartbeat) "Listen to the slow drum, or feel the buzz.\nBreathe in for 2 beats.\nBreathe out for 4 beats.\nYou can tap along if you like."
+        else "Tap the drum with one hand.\nKeep a steady beat.\nThe drum joins in, then slowly gets slower.\nFollow it, then breathe with it.",
         color = tool.deep,
         showTip = s.stage == DrumStage.Find,
         onBack = onBack,
@@ -161,7 +180,7 @@ fun CalmDrumScreen(onBack: () -> Unit, onFinish: () -> Unit) {
                         val now = s.time
                         s.lastTap = now
                         s.lastTapPos = down.position
-                        if (prefs.voiceOn) sounds.play(R.raw.drum, 0.9f)
+                        if (prefs.soundOn) sounds.play(R.raw.drum, 0.9f)
                         when (s.stage) {
                             DrumStage.Find -> {
                                 s.taps.add(now)

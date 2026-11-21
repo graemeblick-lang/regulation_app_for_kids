@@ -21,6 +21,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
@@ -95,6 +97,7 @@ fun SqueezeRelaxScreen(onBack: () -> Unit, onFinish: () -> Unit) {
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier.fillMaxWidth(0.75f).aspectRatio(220f / 260f)
+                .semantics { contentDescription = "Person showing which part of the body to squeeze. Tap to start or pause." }
                 .tapToToggle { if (!timer.finished) running = !running },
         ) {
             if (started && !timer.finished && part == BodyPart.Face) {

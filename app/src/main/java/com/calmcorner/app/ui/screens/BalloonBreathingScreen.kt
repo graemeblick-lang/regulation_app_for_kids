@@ -99,7 +99,8 @@ fun BalloonBreathingScreen(onBack: () -> Unit, onFinish: () -> Unit) {
         onBack = onBack,
     ) {
         Spacer(Modifier.weight(1f))
-        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxWidth(0.9f).aspectRatio(0.9f).tapToToggle { running = !running }) {
+        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxWidth(0.9f).aspectRatio(0.9f).tapToToggle { running = !running }
+            .semantics { contentDescription = "Balloon that gets bigger and smaller. Tap to start or pause." }) {
             val stringColor = MaterialTheme.colorScheme.onSurfaceVariant
             Canvas(Modifier.matchParentSize()) {
                 val maxR = size.minDimension * 0.40f

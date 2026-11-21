@@ -16,6 +16,9 @@ enum class ThemeMode { System, Light, Dark }
  */
 class CalmPrefs(context: Context) {
     private val prefs = context.getSharedPreferences("calm_corner", Context.MODE_PRIVATE)
+    private val systemReducedMotion = try {
+        android.provider.Settings.Global.getFloat(context.contentResolver, android.provider.Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
+    } catch (e: Exception) { false }
 
     var theme by mutableStateOf(ThemeMode.entries.getOrElse(prefs.getInt("theme", 0)) { ThemeMode.System })
         private set
@@ -61,15 +64,66 @@ class CalmPrefs(context: Context) {
     fun updateBubbleMotion(v: Int) { bubbleMotion = v; prefs.edit { putInt("bubble_motion", v) } }
     fun updateBalloonColor(v: Int) { balloonColor = v; prefs.edit { putInt("balloon_color", v) } }
 
+    /** Tools she has starred (shown first in "My calm plan"). */
+    var favourites by mutableStateOf(prefs.getStringSet("favourites", emptySet())!!.toSet())
+        private set
+    fun toggleFavourite(tool: Tool) {
+        val next = if (tool.name in favourites) favourites - tool.name else favourites + tool.name
+        favourites = next
+        prefs.edit { putStringSet("favourites", next) }
+    }
+
+    /** School mode: silent, and hides tools that aren't suited to class. */
+    var schoolMode by mutableStateOf(prefs.getBoolean("school_mode", false))
+        private set
+    fun updateSchoolMode(v: Boolean) { schoolMode = v; prefs.edit { putBoolean("school_mode", v) } }
+
+    /** All sound is allowed only if the sound switch is on and school mode is off. */
+    val soundOn: Boolean get() = voiceOn && !schoolMode
+
+    /** Less movement (defaults to the phone's "remove animations" setting). */
+    var reduceMotion by mutableStateOf(prefs.getBoolean("reduce_motion", systemReducedMotion))
+        private set
+    fun updateReduceMotion(v: Boolean) { reduceMotion = v; prefs.edit { putBoolean("reduce_motion", v) } }
+
+    /** Bigger text and buttons everywhere. */
+    var bigger by mutableStateOf(prefs.getBoolean("bigger", false))
+        private set
+    fun updateBigger(v: Boolean) { bigger = v; prefs.edit { putBoolean("bigger", v) } }
+
+    /** Daily check-in reminder slots that are switched on. */
+    var reminders by mutableStateOf(prefs.getStringSet("reminders", emptySet())!!.toSet())
+        private set
+    fun setReminder(slot: String, on: Boolean) {
+        val next = if (on) reminders + slot else reminders - slot
+        reminders = next
+        prefs.edit { putStringSet("reminders", next) }
+    }
+
+    /** Her calm picture (shown when she picks Red). Stored as a file name in app storage. */
+    var calmPicture by mutableStateOf(prefs.getString("calm_picture", null))
+        private set
+    var calmPictureCaption by mutableStateOf(prefs.getString("calm_picture_caption", "My calm place") ?: "My calm place")
+        private set
+    fun updateCalmPicture(file: String?) { calmPicture = file; prefs.edit { putString("calm_picture", file) } }
+    fun updateCalmPictureCaption(v: String) { calmPictureCaption = v; prefs.edit { putString("calm_picture_caption", v) } }
+
+    /** Trace and Breathe shape: 0 = loop, 1 = star. */
+    var traceShape by mutableIntStateOf(prefs.getInt("trace_shape", 0))
+        private set
+    fun updateTraceShape(v: Int) { traceShape = v; prefs.edit { putInt("trace_shape", v) } }
+
     fun setToolHidden(tool: Tool, hidden: Boolean) {
         val next = if (hidden) hiddenTools + tool.name else hiddenTools - tool.name
         // Always keep at least one tool visible.
-        if (Tool.entries.all { it.name in next }) return
+        if (Tool.entries.filter { it.listed }.all { it.name in next }) return
         hiddenTools = next
         prefs.edit { putStringSet("hidden_tools", next) }
     }
 
-    fun visibleTools(): List<Tool> = Tool.entries.filterNot { it.name in hiddenTools }
+    fun visibleTools(): List<Tool> = Tool.entries.filter {
+        it.listed && it.name !in hiddenTools && (!schoolMode || it.quiet)
+    }
 
     /** Speed is remembered per tool (seconds per breath). */
     fun speedFor(tool: Tool): Int = prefs.getInt("speed_${tool.name}", 4)

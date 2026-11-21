@@ -23,6 +23,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.calmcorner.app.data.LocalPrefs
+import com.calmcorner.app.data.Photos
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.runtime.remember
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import com.calmcorner.app.data.Tool
 import com.calmcorner.app.data.Zone
 import com.calmcorner.app.ui.components.ZoneGrid
@@ -73,6 +82,16 @@ fun CheckInScreen(
             Text("Let's try another tool.", style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.Center)
             if (after == Zone.Red) {
                 Text("Or talk to a grown-up you trust. 💛", style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.Center)
+                val context = LocalContext.current
+                val pic = remember(prefs.calmPicture) { prefs.calmPicture?.let { Photos.load(context, it) } }
+                if (pic != null) {
+                    Spacer(Modifier.height(12.dp))
+                    Image(
+                        pic.asImageBitmap(), contentDescription = prefs.calmPictureCaption, contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxWidth().aspectRatio(1.6f).clip(RoundedCornerShape(16.dp)),
+                    )
+                    Text(prefs.calmPictureCaption, style = MaterialTheme.typography.titleMedium)
+                }
             }
             Spacer(Modifier.height(20.dp))
             val visible = prefs.visibleTools()

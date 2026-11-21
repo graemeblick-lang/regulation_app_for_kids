@@ -191,11 +191,19 @@ fun StartPauseRow(
     }
 }
 
-/** 🔊 / 🔇 quick switch for voice guidance (e.g. on the bus). Remembered. */
+/** 🔊 / 🔇 quick switch for all sound (e.g. on the bus). Remembered. Shows 🏫 in school mode. */
 @Composable
 fun SoundToggle() {
     val prefs = LocalPrefs.current
     val voice = LocalVoice.current
+    if (prefs.schoolMode) {
+        Text(
+            "🏫",
+            fontSize = 22.sp,
+            modifier = Modifier.padding(12.dp).semantics { contentDescription = "School mode is on. Sound is off." },
+        )
+        return
+    }
     IconButton(onClick = {
         val on = !prefs.voiceOn
         prefs.updateVoice(on)

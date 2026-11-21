@@ -29,6 +29,8 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
@@ -159,7 +161,8 @@ fun CalmJarScreen(onBack: () -> Unit, onFinish: () -> Unit) {
         onBack = onBack,
     ) {
         Spacer(Modifier.weight(1f))
-        Canvas(Modifier.fillMaxWidth(0.62f).aspectRatio(0.7f).tapToToggle { shake() }) {
+        Canvas(Modifier.fillMaxWidth(0.62f).aspectRatio(0.7f).tapToToggle { shake() }
+            .semantics { contentDescription = "Glitter jar. Tap to shake it." }) {
             frame // read so the jar redraws every frame
             val w = size.width
             val h = size.height
