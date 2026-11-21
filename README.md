@@ -6,7 +6,7 @@ A simple, calm Android app with tools that help kids and young people regulate b
 
 ## What's in the app
 
-**Check-in loop:** pick a colour (Blue, Green, Yellow or Red), get suggested tools, do one, then answer **"How do you feel now?"**. Every finished tool earns a ⭐ for effort. If she isn't calm yet, it suggests another tool (and on Red, talking to a grown-up).
+**Check-in loop:** pick a colour (Blue, Green, Yellow or Red), get suggested tools, do one, then answer **"How do you feel now?"**. What she sees at the end is a grown-up setting: **Neutral** (default: just "All done.", because rewards can feel like a demand), **Calm garden** (a flower per finished tool, no numbers) or **Stars**. If she isn't calm yet, it suggests another tool (and on Red, talking to a grown-up).
 
 | Tool | What it does |
 |---|---|
@@ -24,7 +24,7 @@ A simple, calm Android app with tools that help kids and young people regulate b
 | 🌧️ **Calm Sounds** | Rain, waves or a soft hum made live by the app (no recordings), for 5, 10 or 20 minutes, fading out at the end. |
 | ⏳ **Calm Timer** | 1, 2 or 5 minutes of quiet rest with a slowly pulsing circle. |
 
-**My calm plan:** she stars ☆ her favourite tools, and a grown-up adds her own calm ideas with a photo (e.g. "Cuddle the dog"). These show first on the home screen. A **calm picture** (her safe place, pet or person) appears when she picks Red.
+**My calm plan:** she taps ♡ (or ☆ / 📌, a grown-up's choice) to add favourite tools, and a grown-up adds her own calm ideas with a photo (e.g. "Cuddle the dog"). These show first on the home screen. A **calm picture** (her safe place, pet or person) appears when she picks Red.
 
 **Body clues:** "How does Red feel in my body?" shows a figure with the body areas lit up, plus simple words (e.g. "My face feels hot").
 

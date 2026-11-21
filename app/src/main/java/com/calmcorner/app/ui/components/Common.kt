@@ -301,3 +301,29 @@ fun ZoneGrid(selected: Zone?, onPick: (Zone) -> Unit) {
         }
     }
 }
+
+/** The "add to My calm plan" icon a grown-up chose: heart, star or pin. */
+fun favouriteSymbol(style: Int, on: Boolean): String = when (style) {
+    1 -> if (on) "★" else "☆"
+    2 -> "📌"
+    else -> if (on) "♥" else "♡"
+}
+
+fun favouriteColor(style: Int): Color = when (style) {
+    1 -> Color(0xFFE0A800)
+    2 -> Color(0xFFD9534F)
+    else -> Color(0xFFE0526E)
+}
+
+/** Heading icon for "My calm plan" that matches the chosen favourite icon. */
+fun planHeading(style: Int): String = when (style) {
+    1 -> "⭐ My calm plan"
+    2 -> "📌 My calm plan"
+    else -> "💗 My calm plan"
+}
+
+private val flowers = listOf("🌷", "🌼", "🌸", "🌻", "🌺", "🪻", "🌹")
+
+/** One flower per finished tool. Never shrinks, no numbers: nothing to "keep up". */
+fun gardenFlowers(count: Int, max: Int = 40): String =
+    (0 until minOf(count, max)).joinToString("") { flowers[it % flowers.size] }

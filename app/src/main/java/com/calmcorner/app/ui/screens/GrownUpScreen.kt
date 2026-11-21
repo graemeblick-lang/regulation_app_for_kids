@@ -114,7 +114,7 @@ fun GrownUpScreen(onBack: () -> Unit) {
         ) {
             // ---- This week ----
             Section("This week") {
-                Text("⭐ ${summary.stars} finished ${if (summary.stars == 1) "exercise" else "exercises"}", style = MaterialTheme.typography.titleMedium)
+                Text("${summary.stars} finished ${if (summary.stars == 1) "exercise" else "exercises"}", style = MaterialTheme.typography.titleMedium)
                 if (summary.checkIns > 0) {
                     Text(
                         "Felt calmer afterwards ${summary.feltBetter} of ${summary.checkIns} times",
@@ -286,8 +286,28 @@ fun GrownUpScreen(onBack: () -> Unit) {
                 ) { prefs.updateTheme(ThemeMode.entries[it]) }
             }
 
-            Section("Tools to show") {
-                Text("Hide tools she doesn't use. Fewer choices can be easier.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Section("After a tool") {
+                Text("What she sees when she finishes. Some kids feel rewards and praise as pressure, so Neutral is the default.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(Modifier.height(6.dp))
+                ChipRow(listOf(0 to "🌿 Neutral", 1 to "🌷 Calm garden", 2 to "⭐ Stars"), prefs.rewardStyle) { prefs.updateRewardStyle(it) }
+                Text(
+                    when (prefs.rewardStyle) {
+                        1 -> "Each finished tool adds a flower to a garden on her home screen. No numbers, and flowers never disappear."
+                        2 -> "A star at the end, and a count of stars this week on her home screen."
+                        else -> "Just \"All done.\" No reward, no count."
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+
+            Section("Her favourites") {
+                Text("The icon she taps on a tool to add it to My calm plan.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(Modifier.height(6.dp))
+                ChipRow(listOf(0 to "♥ Heart", 1 to "★ Star", 2 to "📌 Pin"), prefs.favouriteIcon) { prefs.updateFavouriteIcon(it) }
+            }
+
+            Section("Tools she can use") {
+                Text("Switch off any tool to remove it everywhere: home, suggestions, her calm plan and the widget. Fewer choices can be easier.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Tool.entries.filter { it.listed }.forEach { tool ->
                     SwitchRow("${tool.emoji} ${tool.title}", null, tool.name !in prefs.hiddenTools) { show ->
                         prefs.setToolHidden(tool, !show)

@@ -63,6 +63,10 @@ import com.calmcorner.app.data.Tool
 import com.calmcorner.app.data.Zone
 import com.calmcorner.app.data.summarise
 import com.calmcorner.app.ui.components.ZoneGrid
+import com.calmcorner.app.ui.components.favouriteColor
+import com.calmcorner.app.ui.components.favouriteSymbol
+import com.calmcorner.app.ui.components.gardenFlowers
+import com.calmcorner.app.ui.components.planHeading
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -95,11 +99,18 @@ fun HomeScreen(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text("Calm Corner", style = MaterialTheme.typography.displaySmall)
-                    if (stars > 0) {
+                    if (prefs.rewardStyle == 2 && stars > 0) {
                         Text(
                             "⭐ $stars ${if (stars == 1) "star" else "stars"} this week",
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    } else if (prefs.rewardStyle == 1 && history.records.isNotEmpty()) {
+                        Text(
+                            gardenFlowers(history.records.size),
+                            fontSize = 20.sp,
+                            lineHeight = 26.sp,
+                            modifier = Modifier.semantics { contentDescription = "My calm garden" },
                         )
                     } else {
                         Text("Your calm place.", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -151,7 +162,7 @@ fun HomeScreen(
             }
         }
         if (favourites.isNotEmpty() || cards.isNotEmpty()) {
-            item { SectionTitle("⭐ My calm plan") }
+            item { SectionTitle(planHeading(prefs.favouriteIcon)) }
             val planItems: List<Any> = favourites + cards
             items(planItems.chunked(2), key = { row -> "p-" + row.joinToString { if (it is Tool) it.name else (it as CopingCard).id } }) { row ->
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.height(IntrinsicSize.Min)) {
@@ -274,13 +285,16 @@ private fun ToolTile(tool: Tool, highlighted: Boolean, starred: Boolean, onStar:
             )
         }
     }
-    // ☆ / ★ to add or remove from "My calm plan"
+    // Heart / star / pin (grown-up's choice) to add or remove from "My calm plan"
+    val style = LocalPrefs.current.favouriteIcon
     IconButton(onClick = onStar, modifier = Modifier.align(Alignment.TopEnd)) {
         Text(
-            if (starred) "★" else "☆",
+            favouriteSymbol(style, starred),
             fontSize = 24.sp,
-            color = if (starred) Color(0xFFE0A800) else MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.semantics { contentDescription = if (starred) "In my calm plan. Tap to remove." else "Add to my calm plan" },
+            color = if (starred) favouriteColor(style) else MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier
+                .alpha(if (style == 2 && !starred) 0.35f else 1f)
+                .semantics { contentDescription = if (starred) "In my calm plan. Tap to remove." else "Add to my calm plan" },
         )
     }
     }

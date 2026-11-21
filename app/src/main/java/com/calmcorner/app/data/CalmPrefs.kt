@@ -64,7 +64,17 @@ class CalmPrefs(context: Context) {
     fun updateBubbleMotion(v: Int) { bubbleMotion = v; prefs.edit { putInt("bubble_motion", v) } }
     fun updateBalloonColor(v: Int) { balloonColor = v; prefs.edit { putInt("balloon_color", v) } }
 
-    /** Tools she has starred (shown first in "My calm plan"). */
+    /** What she sees after finishing a tool: 0 = neutral (no reward), 1 = calm garden, 2 = stars. */
+    var rewardStyle by mutableIntStateOf(prefs.getInt("reward_style", 0))
+        private set
+    fun updateRewardStyle(v: Int) { rewardStyle = v; prefs.edit { putInt("reward_style", v) } }
+
+    /** Icon used to add a tool to "My calm plan": 0 = heart, 1 = star, 2 = pin. */
+    var favouriteIcon by mutableIntStateOf(prefs.getInt("favourite_icon", 0))
+        private set
+    fun updateFavouriteIcon(v: Int) { favouriteIcon = v; prefs.edit { putInt("favourite_icon", v) } }
+
+    /** Tools she has added to "My calm plan". */
     var favourites by mutableStateOf(prefs.getStringSet("favourites", emptySet())!!.toSet())
         private set
     fun toggleFavourite(tool: Tool) {

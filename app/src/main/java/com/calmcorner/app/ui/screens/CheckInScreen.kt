@@ -52,16 +52,37 @@ fun CheckInScreen(
 ) {
     val cues = rememberCues()
     val prefs = LocalPrefs.current
-    LaunchedEffect(Unit) { cues.say("All done. You earned a star. How do you feel now?") }
+    LaunchedEffect(Unit) {
+        cues.say(
+            when (prefs.rewardStyle) {
+                1 -> "All done. A new flower is in your garden. How do you feel now?"
+                else -> "All done. How do you feel now?"
+            },
+        )
+    }
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp),
     ) {
         Spacer(Modifier.height(16.dp))
-        Text("⭐", fontSize = 72.sp)
-        Text("All done!", style = MaterialTheme.typography.displaySmall)
-        Text("You earned a star.", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        // Reward style is a grown-up setting. Neutral by default: no praise or reward,
+        // because for some kids rewards feel like a demand.
+        when (prefs.rewardStyle) {
+            1 -> {
+                Text("🌷", fontSize = 72.sp)
+                Text("All done.", style = MaterialTheme.typography.displaySmall)
+                Text("A new flower is in your garden.", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            2 -> {
+                Text("⭐", fontSize = 72.sp)
+                Text("All done.", style = MaterialTheme.typography.displaySmall)
+            }
+            else -> {
+                Text("🌿", fontSize = 72.sp)
+                Text("All done.", style = MaterialTheme.typography.displaySmall)
+            }
+        }
         Spacer(Modifier.height(28.dp))
 
         if (after == null) {
