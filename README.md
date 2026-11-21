@@ -62,6 +62,12 @@ A simple, calm Android app with tools that help kids and young people regulate b
 
 A new build is published automatically on every push (see the **Releases** section of the repo page).
 
+**Numbered versions:** each tagged version (e.g. **v0.3.0**) also has its own permanent release with release notes. If a newer build has a problem, install an older numbered version from the Releases page.
+
+## Branches and releases
+- `main` is the stable version. New work happens on a separate branch and is merged into `main` with a pull request.
+- To publish a numbered version: update `versionCode`/`versionName` in `app/build.gradle.kts`, add `release-notes/vX.Y.Z.md`, then tag the commit `vX.Y.Z` and push the tag.
+
 ### Running the tests
 `./gradlew testDebugUnitTest` (also runs on every push).
 

@@ -2,6 +2,8 @@ name: Build APK
 
 on:
   push:
+    branches: ['**']
+    tags: ['v*']
   pull_request:
   workflow_dispatch:
 
@@ -29,10 +31,11 @@ jobs:
         with:
           name: calm-corner-debug-apk
           path: CalmCorner.apk
-      # Publishes/refreshes a "latest" release so the APK has a simple, stable download link:
+
+      # Branch pushes: refresh the rolling "latest test build" (the usual download link):
       # https://github.com/<owner>/<repo>/releases/latest/download/CalmCorner.apk
-      - name: Publish to "latest" release
-        if: github.event_name != 'pull_request'
+      - name: Publish to "latest test build"
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/')
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest-build
@@ -40,6 +43,22 @@ jobs:
           body: |
             Latest test build from commit ${{ github.sha }}.
             On your Android phone, tap **CalmCorner.apk** below to download and install it.
+            Looking for a specific version? See the numbered releases (e.g. v0.3.0).
           prerelease: false
           make_latest: true
           files: CalmCorner.apk
+
+      # Version tags (v0.3.0 etc.): a permanent numbered release that never changes,
+      # so a known-good version can always be reinstalled.
+      - name: Name versioned APK
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: cp CalmCorner.apk "CalmCorner-${GITHUB_REF_NAME}.apk"
+      - name: Publish numbered release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Calm Corner ${{ github.ref_name }}
+          body_path: release-notes/${{ github.ref_name }}.md
+          make_latest: false
+          files: CalmCorner-${{ github.ref_name }}.apk
