@@ -49,6 +49,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.semantics.contentDescription
@@ -280,7 +282,7 @@ fun ZoneTile(zone: Zone, selected: Boolean, onClick: () -> Unit, modifier: Modif
                 Text(zone.label, style = MaterialTheme.typography.titleLarge)
             }
             Spacer(Modifier.height(6.dp))
-            Text(zone.words, style = MaterialTheme.typography.bodyMedium)
+            Text(zone.words, style = MaterialTheme.typography.bodyMedium, minLines = 2)
         }
     }
 }
@@ -290,9 +292,10 @@ fun ZoneTile(zone: Zone, selected: Boolean, onClick: () -> Unit, modifier: Modif
 fun ZoneGrid(selected: Zone?, onPick: (Zone) -> Unit) {
     Column {
         Zone.entries.chunked(2).forEach { row ->
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.padding(bottom = 10.dp)) {
+            // Same height for both tiles in a row, even if one wraps onto more lines.
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.padding(bottom = 10.dp).height(IntrinsicSize.Min)) {
                 row.forEach { z ->
-                    ZoneTile(z, z == selected, onClick = { onPick(z) }, modifier = Modifier.weight(1f))
+                    ZoneTile(z, z == selected, onClick = { onPick(z) }, modifier = Modifier.weight(1f).fillMaxHeight())
                 }
             }
         }
