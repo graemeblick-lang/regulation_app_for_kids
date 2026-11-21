@@ -8,6 +8,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -61,6 +63,10 @@ import com.calmcorner.app.data.Tool
 import com.calmcorner.app.data.Zone
 import com.calmcorner.app.data.summarise
 import com.calmcorner.app.ui.components.ZoneGrid
+import com.calmcorner.app.ui.components.favouriteColor
+import com.calmcorner.app.ui.components.favouriteSymbol
+import com.calmcorner.app.ui.components.gardenFlowers
+import com.calmcorner.app.ui.components.planHeading
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -93,11 +99,18 @@ fun HomeScreen(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text("Calm Corner", style = MaterialTheme.typography.displaySmall)
-                    if (stars > 0) {
+                    if (prefs.rewardStyle == 2 && stars > 0) {
                         Text(
                             "⭐ $stars ${if (stars == 1) "star" else "stars"} this week",
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    } else if (prefs.rewardStyle == 1 && history.records.isNotEmpty()) {
+                        Text(
+                            gardenFlowers(history.records.size),
+                            fontSize = 20.sp,
+                            lineHeight = 26.sp,
+                            modifier = Modifier.semantics { contentDescription = "My calm garden" },
                         )
                     } else {
                         Text("Your calm place.", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -112,55 +125,58 @@ fun HomeScreen(
             Text("How do you feel? Pick a colour.", style = MaterialTheme.typography.titleLarge)
             Spacer(Modifier.height(10.dp))
             ZoneGrid(selected = zone, onPick = { z -> onZoneChange(if (z == zone) null else z) })
-            AnimatedVisibility(visible = zone != null) {
+            // Under the colours: body clues link, and her calm picture when she picks Red.
+            if (zone != null) {
+                TextButton(onClick = { onOpenClues(zone) }, contentPadding = PaddingValues(0.dp)) {
+                    Text("👀 How does ${zone.label} feel in my body?", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+                }
+            }
+            if (zone == Zone.Red && calmPicture != null) {
                 Card(
-                    colors = CardDefaults.cardColors(containerColor = (zone?.color ?: Color.Transparent).copy(alpha = 0.18f)),
+                    colors = CardDefaults.cardColors(containerColor = Zone.Red.color.copy(alpha = 0.12f)),
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Column(Modifier.padding(16.dp)) {
-                        Text(zone?.message.orEmpty(), style = MaterialTheme.typography.titleMedium)
-                        if (zone == Zone.Red && calmPicture != null) {
-                            Spacer(Modifier.height(10.dp))
-                            Image(
-                                calmPicture.asImageBitmap(), contentDescription = prefs.calmPictureCaption,
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier.fillMaxWidth().aspectRatio(1.6f).clip(RoundedCornerShape(16.dp)),
-                            )
-                            Text(prefs.calmPictureCaption, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 6.dp))
-                        }
-                        if (zone != null) {
-                            TextButton(onClick = { onOpenClues(zone) }, contentPadding = PaddingValues(0.dp)) {
-                                Text("👀 How does ${zone.label} feel in my body?", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
-                            }
-                        }
+                    Column(Modifier.padding(12.dp)) {
+                        Image(
+                            calmPicture.asImageBitmap(), contentDescription = prefs.calmPictureCaption,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxWidth().aspectRatio(1.6f).clip(RoundedCornerShape(16.dp)),
+                        )
+                        Text(prefs.calmPictureCaption, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 6.dp))
                     }
                 }
             }
         }
+        if (zone != null && suggested.isNotEmpty()) {
+            item {
+                // The colour's message leads straight into the tools that suit it.
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = zone.color.copy(alpha = 0.18f)),
+                    modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+                ) {
+                    Text(zone.message, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp))
+                }
+            }
+            items(suggested.chunked(2), key = { row -> "s-" + row.joinToString { it.name } }) { row ->
+                ToolRow(row, highlighted = true, onOpenTool)
+            }
+        }
         if (favourites.isNotEmpty() || cards.isNotEmpty()) {
-            item { SectionTitle("⭐ My calm plan") }
+            item { SectionTitle(planHeading(prefs.favouriteIcon)) }
             val planItems: List<Any> = favourites + cards
             items(planItems.chunked(2), key = { row -> "p-" + row.joinToString { if (it is Tool) it.name else (it as CopingCard).id } }) { row ->
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.height(IntrinsicSize.Min)) {
                     row.forEach { item ->
                         when (item) {
-                            is Tool -> ToolTile(item, highlighted = true, starred = true, onStar = { prefs.toggleFavourite(item) }, onClick = { onOpenTool(item) }, modifier = Modifier.weight(1f))
-                            is CopingCard -> CardTile(item, onClick = { onOpenCard(item) }, modifier = Modifier.weight(1f))
+                            is Tool -> ToolTile(item, highlighted = true, starred = true, onStar = { prefs.toggleFavourite(item) }, onClick = { onOpenTool(item) }, modifier = Modifier.weight(1f).fillMaxHeight())
+                            is CopingCard -> CardTile(item, onClick = { onOpenCard(item) }, modifier = Modifier.weight(1f).fillMaxHeight())
                         }
                     }
                     if (row.size == 1) Spacer(Modifier.weight(1f))
                 }
             }
         }
-        if (suggested.isNotEmpty()) {
-            item { SectionTitle("Try these") }
-            items(suggested.chunked(2), key = { row -> "s-" + row.joinToString { it.name } }) { row ->
-                ToolRow(row, highlighted = true, onOpenTool)
-            }
-            item { SectionTitle("More tools") }
-        } else {
-            item { SectionTitle("Calm tools") }
-        }
+        item { SectionTitle(if (zone != null && suggested.isNotEmpty()) "More tools" else "Calm tools") }
         items(others.chunked(2), key = { row -> row.joinToString { it.name } }) { row ->
             ToolRow(row, highlighted = false, onOpenTool)
         }
@@ -235,8 +251,8 @@ private fun SectionTitle(text: String) {
 @Composable
 private fun ToolRow(row: List<Tool>, highlighted: Boolean, onOpenTool: (Tool) -> Unit) {
     val prefs = LocalPrefs.current
-    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        row.forEach { ToolTile(it, highlighted, starred = it.name in LocalPrefs.current.favourites, onStar = { prefs.toggleFavourite(it) }, onClick = { onOpenTool(it) }, modifier = Modifier.weight(1f)) }
+    Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.height(IntrinsicSize.Min)) {
+        row.forEach { ToolTile(it, highlighted, starred = it.name in LocalPrefs.current.favourites, onStar = { prefs.toggleFavourite(it) }, onClick = { onOpenTool(it) }, modifier = Modifier.weight(1f).fillMaxHeight()) }
         if (row.size == 1) Spacer(Modifier.weight(1f))
     }
 }
@@ -251,7 +267,7 @@ private fun ToolTile(tool: Tool, highlighted: Boolean, starred: Boolean, onStar:
             containerColor = if (highlighted) tool.color.copy(alpha = 0.22f) else MaterialTheme.colorScheme.surface,
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = if (highlighted) 0.dp else 1.dp),
-        modifier = Modifier.fillMaxWidth().heightIn(min = 150.dp),
+        modifier = Modifier.fillMaxSize().heightIn(min = 160.dp),
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth().padding(14.dp)) {
             Box(
@@ -259,22 +275,26 @@ private fun ToolTile(tool: Tool, highlighted: Boolean, starred: Boolean, onStar:
                 modifier = Modifier.size(64.dp).background(tool.color.copy(alpha = 0.28f), CircleShape),
             ) { Text(tool.emoji, fontSize = 32.sp) }
             Spacer(Modifier.height(10.dp))
-            Text(tool.title, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
+            Text(tool.title, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center, maxLines = 2)
             Text(
                 tool.subtitle,
+                minLines = 2,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
             )
         }
     }
-    // ☆ / ★ to add or remove from "My calm plan"
+    // Heart / star / pin (grown-up's choice) to add or remove from "My calm plan"
+    val style = LocalPrefs.current.favouriteIcon
     IconButton(onClick = onStar, modifier = Modifier.align(Alignment.TopEnd)) {
         Text(
-            if (starred) "★" else "☆",
+            favouriteSymbol(style, starred),
             fontSize = 24.sp,
-            color = if (starred) Color(0xFFE0A800) else MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.semantics { contentDescription = if (starred) "In my calm plan. Tap to remove." else "Add to my calm plan" },
+            color = if (starred) favouriteColor(style) else MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier
+                .alpha(if (style == 2 && !starred) 0.35f else 1f)
+                .semantics { contentDescription = if (starred) "In my calm plan. Tap to remove." else "Add to my calm plan" },
         )
     }
     }
@@ -288,7 +308,7 @@ private fun CardTile(card: CopingCard, onClick: () -> Unit, modifier: Modifier =
         onClick = onClick,
         shape = RoundedCornerShape(22.dp),
         colors = CardDefaults.cardColors(containerColor = Tool.CopingCard.color.copy(alpha = 0.22f)),
-        modifier = modifier.heightIn(min = 150.dp),
+        modifier = modifier.heightIn(min = 160.dp),
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth().padding(14.dp)) {
             if (photo != null) {

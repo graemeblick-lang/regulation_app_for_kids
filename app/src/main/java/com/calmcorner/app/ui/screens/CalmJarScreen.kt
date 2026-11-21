@@ -154,8 +154,8 @@ fun CalmJarScreen(onBack: () -> Unit, onFinish: () -> Unit) {
 
     ToolScaffold(
         title = tool.title,
-        tip = "Shake the phone. Watch the glitter fall.",
-        howTo = "Shake the phone, or tap ✨ Shake.\nWatch the glitter slowly fall.\nBreathe slowly while you watch.",
+        tip = "Shake your device. Watch the glitter fall.",
+        howTo = "Shake your device, or tap ✨ Shake.\nWatch the glitter slowly fall.\nBreathe slowly while you watch.",
         color = tool.deep,
         showTip = !moving,
         onBack = onBack,
@@ -188,7 +188,7 @@ fun CalmJarScreen(onBack: () -> Unit, onFinish: () -> Unit) {
         Spacer(Modifier.height(16.dp))
         Text(
             when {
-                !shaken -> "Shake the phone!"
+                !shaken -> "Shake your device!"
                 moving -> "Watch the glitter fall…"
                 else -> "All still. ✨"
             },

@@ -50,13 +50,13 @@ enum class Zone(
     val color: Color,
     val suggestions: List<Tool>,
 ) {
-    Blue("Blue", "😔", "Sad, tired, slow", "Sad or tired? These can help.",
+    Blue("Blue", "😔", "Sad, tired, sick", "These can help you feel a bit better.",
         Color(0xFF4A7FC1), listOf(Tool.BodyMoves, Tool.SqueezeRelax, Tool.BubblePop)),
-    Green("Green", "🙂", "Calm, happy, ready", "You feel calm. Practise a tool now.",
+    Green("Green", "🙂", "Calm, happy, ready", "You feel calm. You can practise one of these.",
         Color(0xFF4F9D5D), listOf(Tool.BoxBreathing, Tool.TraceBreathe)),
-    Yellow("Yellow", "😬", "Worried, wiggly, silly", "These can help you feel calm.",
+    Yellow("Yellow", "😬", "Worried, excited, wiggly", "These can help your body slow down.",
         Color(0xFFE7B416), listOf(Tool.CalmDrum, Tool.FingerBreathing, Tool.Grounding)),
-    Red("Red", "😡", "Very angry or scared", "Stop. Breathe. You are safe.",
+    Red("Red", "😡", "Very angry or scared", "You are safe. These can help you calm down.",
         Color(0xFFD9534F), listOf(Tool.SqueezeRelax, Tool.CalmDrum, Tool.CalmJar)),
 }
 
@@ -66,8 +66,8 @@ data class BodyClue(val emoji: String, val text: String)
 val Zone.clues: List<BodyClue>
     get() = when (this) {
         Zone.Red -> listOf(BodyClue("🔥", "My face feels hot"), BodyClue("💓", "My heart beats fast"), BodyClue("✊", "My hands make fists"), BodyClue("📢", "I want to shout or hit"))
-        Zone.Yellow -> listOf(BodyClue("🦋", "My tummy feels wobbly"), BodyClue("🌀", "My body wants to move"), BodyClue("😬", "My shoulders feel tight"), BodyClue("💭", "My thoughts go fast"))
-        Zone.Blue -> listOf(BodyClue("😴", "My body feels heavy and tired"), BodyClue("💧", "My eyes might cry"), BodyClue("🐌", "I move slowly"), BodyClue("🙁", "I want to be alone"))
+        Zone.Yellow -> listOf(BodyClue("🦋", "My tummy feels wobbly"), BodyClue("🌀", "My body wants to move"), BodyClue("🤩", "I feel very excited"), BodyClue("😬", "My shoulders feel tight"), BodyClue("💭", "My thoughts go fast"))
+        Zone.Blue -> listOf(BodyClue("😴", "My body feels heavy and tired"), BodyClue("🤒", "I feel sick"), BodyClue("💧", "My eyes might cry"), BodyClue("🐌", "I move slowly"), BodyClue("🙁", "I want to be alone"))
         Zone.Green -> listOf(BodyClue("😌", "My breathing is slow"), BodyClue("🙂", "My face feels soft"), BodyClue("👂", "I can listen"), BodyClue("👍", "I feel OK"))
     }
 

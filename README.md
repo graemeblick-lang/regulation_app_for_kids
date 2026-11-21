@@ -6,7 +6,7 @@ A simple, calm Android app with tools that help kids and young people regulate b
 
 ## What's in the app
 
-**Check-in loop:** pick a colour (Blue, Green, Yellow or Red), get suggested tools, do one, then answer **"How do you feel now?"**. Every finished tool earns a ⭐ for effort. If she isn't calm yet, it suggests another tool (and on Red, talking to a grown-up).
+**Check-in loop:** pick a colour (Blue, Green, Yellow or Red), get suggested tools, do one, then answer **"How do you feel now?"**. What she sees at the end is a grown-up setting: **Neutral** (default: just "All done.", because rewards can feel like a demand), **Calm garden** (a flower per finished tool, no numbers) or **Stars**. If she isn't calm yet, it suggests another tool (and on Red, talking to a grown-up).
 
 | Tool | What it does |
 |---|---|
@@ -24,7 +24,7 @@ A simple, calm Android app with tools that help kids and young people regulate b
 | 🌧️ **Calm Sounds** | Rain, waves or a soft hum made live by the app (no recordings), for 5, 10 or 20 minutes, fading out at the end. |
 | ⏳ **Calm Timer** | 1, 2 or 5 minutes of quiet rest with a slowly pulsing circle. |
 
-**My calm plan:** she stars ☆ her favourite tools, and a grown-up adds her own calm ideas with a photo (e.g. "Cuddle the dog"). These show first on the home screen. A **calm picture** (her safe place, pet or person) appears when she picks Red.
+**My calm plan:** she taps ♡ (or ☆ / 📌, a grown-up's choice) to add favourite tools, and a grown-up adds her own calm ideas with a photo (e.g. "Cuddle the dog"). These show first on the home screen. A **calm picture** (her safe place, pet or person) appears when she picks Red.
 
 **Body clues:** "How does Red feel in my body?" shows a figure with the body areas lit up, plus simple words (e.g. "My face feels hot").
 
@@ -54,6 +54,7 @@ A simple, calm Android app with tools that help kids and young people regulate b
 ### Option A: download the APK straight onto the phone (no setup)
 1. On the Android phone, open this link in Chrome (sign in to GitHub first if the repo is private):
    **https://github.com/graemeblick-lang/regulation_app_for_kids/releases/latest/download/CalmCorner.apk**
+   (always the newest test build: https://github.com/graemeblick-lang/regulation_app_for_kids/releases/download/latest-build/CalmCorner.apk)
 2. Open the downloaded file. Android asks you to allow "install unknown apps" for Chrome. Allow it and tap **Install**.
 3. If Play Protect warns about an unknown developer, tap **More details → Install anyway**. This happens with every self-built test app.
 4. If Play Protect blocks it with no "Install anyway" option: open the **Play Store** app → tap your profile picture → **Play Protect** → ⚙️ settings → turn off **Scan apps with Play Protect**. Install the app, then **turn it back on**.
@@ -66,7 +67,7 @@ A new build is published automatically on every push (see the **Releases** secti
 
 ## Branches and releases
 - `main` is the stable version. New work happens on a separate branch and is merged into `main` with a pull request.
-- To publish a numbered version: update `versionCode`/`versionName` in `app/build.gradle.kts`, add `release-notes/vX.Y.Z.md`, then tag the commit `vX.Y.Z` and push the tag.
+- To publish a numbered version: update `versionCode`/`versionName` in `app/build.gradle.kts`, add `release-notes/vX.Y.Z.md`, then create the release on GitHub (Releases → Draft a new release → new tag `vX.Y.Z` on `main`). **Untick "Set as the latest release"** so the usual download link keeps giving the newest test build. The build attaches the APK automatically.
 
 ### Running the tests
 `./gradlew testDebugUnitTest` (also runs on every push).
