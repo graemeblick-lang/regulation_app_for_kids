@@ -80,18 +80,18 @@ fun PoseFigure(
             drawLine(prop, p(Offset(0.64f, 0.64f)), p(Offset(0.64f, 0.92f)), strokeWidth = 0.05f * s, cap = StrokeCap.Round)
         }
 
-        fun limbPath(vararg pts: Offset, color: Color, w: Float) {
+        fun limbPath(pts: List<Offset>, color: Color, w: Float) {
             val path = Path()
             pts.forEachIndexed { i, o -> val q = p(o); if (i == 0) path.moveTo(q.x, q.y) else path.lineTo(q.x, q.y) }
             drawPath(path, color, style = Stroke(w * s, cap = StrokeCap.Round, join = StrokeJoin.Round))
         }
         val legC = col(PosePart.Legs, limb)
-        limbPath(pose.hip, pose.kneeL, pose.footL, color = legC, w = 0.085f)
-        limbPath(pose.hip, pose.kneeR ?: pose.kneeL, pose.footR ?: pose.footL, color = legC, w = 0.085f)
-        limbPath(pose.neck, pose.hip, color = col(PosePart.Body, body), w = 0.17f)
+        limbPath(listOf(pose.hip, pose.kneeL, pose.footL), color = legC, w = 0.085f)
+        limbPath(listOf(pose.hip, pose.kneeR ?: pose.kneeL, pose.footR ?: pose.footL), color = legC, w = 0.085f)
+        limbPath(listOf(pose.neck, pose.hip), color = col(PosePart.Body, body), w = 0.17f)
         val armC = col(PosePart.Arms, limb)
-        limbPath(pose.shL, pose.elL, pose.haL, color = armC, w = 0.07f)
-        limbPath(pose.shR ?: pose.shL, pose.elR ?: pose.elL, pose.haR ?: pose.haL, color = armC, w = 0.07f)
+        limbPath(listOf(pose.shL, pose.elL, pose.haL), color = armC, w = 0.07f)
+        limbPath(listOf(pose.shR ?: pose.shL, pose.elR ?: pose.elL, pose.haR ?: pose.haL), color = armC, w = 0.07f)
         val handC = col(PosePart.Hands, limb)
         val hands = listOf(pose.haL, pose.haR ?: pose.haL)
         hands.forEach { drawCircle(handC, 0.045f * s, p(it)) }
