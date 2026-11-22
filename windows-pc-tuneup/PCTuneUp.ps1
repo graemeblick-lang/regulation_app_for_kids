@@ -9,7 +9,10 @@
 
     Requires Windows 10 or 11 with Windows PowerShell 5.1 (built in).
 #>
-param([switch]$Limited)   # -Limited: do not ask for administrator rights
+param(
+    [switch]$Limited,    # do not ask for administrator rights
+    [string]$DataRoot    # folder to keep reports/undo data in (the .exe passes its own folder)
+)
 
 Set-StrictMode -Off
 $ErrorActionPreference = 'Continue'
@@ -20,9 +23,11 @@ $script:SelfPath = if ($PSCommandPath) { $PSCommandPath } else { $MyInvocation.M
 # Ask Windows for administrator rights (needed for tune-ups and some checks).
 # If the user clicks "No", carry on in limited (scan-only) mode.
 if (-not $script:IsAdmin -and -not $Limited -and $script:SelfPath) {
+    $elevArgs = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-STA', '-File', "`"$script:SelfPath`"")
+    if ($DataRoot) { $elevArgs += @('-DataRoot', "`"$DataRoot`"") }
     try {
         Start-Process -FilePath 'powershell.exe' -Verb RunAs -WindowStyle Hidden -ErrorAction Stop `
-            -ArgumentList @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-STA', '-File', "`"$script:SelfPath`"")
+            -ArgumentList $elevArgs
         exit
     } catch { }
 }
@@ -52,7 +57,8 @@ $script:GuidUltimate = 'e9a42b02-d5df-448d-aa00-03f14749eb61'
 #  if the tool is on read-only media)
 # ---------------------------------------------------------------------------
 function Get-DataFolder {
-    $d = Join-Path $script:Root 'PCTuneUp-Data'
+    $base = if ($DataRoot -and (Test-Path -LiteralPath $DataRoot)) { $DataRoot } else { $script:Root }
+    $d = Join-Path $base 'PCTuneUp-Data'
     try {
         if (-not (Test-Path -LiteralPath $d)) { New-Item -ItemType Directory -Path $d -Force -ErrorAction Stop | Out-Null }
         $probe = Join-Path $d '.write-test'

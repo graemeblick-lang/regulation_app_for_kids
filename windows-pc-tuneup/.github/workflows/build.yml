@@ -1,0 +1,34 @@
+name: Build PCTuneUp.exe
+
+on:
+  push:
+    branches: ['**']
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Syntax-check script and build exe
+        shell: powershell
+        run: .\build.ps1
+
+      - name: Upload exe
+        uses: actions/upload-artifact@v4
+        with:
+          name: PCTuneUp
+          path: dist/PCTuneUp.exe
+
+      - name: Publish release (version tags only)
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/PCTuneUp.exe --title "PC TuneUp $GITHUB_REF_NAME" --notes "Download PCTuneUp.exe and double-click it. Works offline; no installation."

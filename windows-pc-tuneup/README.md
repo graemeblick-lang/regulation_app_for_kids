@@ -2,14 +2,12 @@
 
 A **portable** Windows tool. Nothing to install, and it runs from any folder or USB stick. It works **offline**: it contains no network code and never connects to the internet. It works out **why your fan is loud**, checks your PC's overall performance, explains each problem in plain English and can apply the fixes it recommends.
 
-> This folder is a separate tool. It has nothing to do with the Calm Corner Android app in the rest of this repository.
-
 ## How to use
 
-1. Copy the `windows-pc-tuneup` folder anywhere (Desktop, USB stick, etc.). You need both files:
-   - `Start PC TuneUp.cmd`
-   - `PCTuneUp.ps1`
-2. Double-click **`Start PC TuneUp.cmd`**. Click **Yes** when Windows asks for administrator permission. If you click **No**, the tool still runs, but only scans (it can't apply tune-ups).
+1. Get **`PCTuneUp.exe`** from this repository's Releases page (or build it, see below). Put it anywhere: Desktop, USB stick, etc. It is the only file you need.
+2. Double-click **`PCTuneUp.exe`**. Click **Yes** when Windows asks for administrator permission. If you click **No**, the tool still runs, but only scans (it can't apply tune-ups).
+   - The first time, Windows SmartScreen may say *"Windows protected your PC"* because the file isn't signed by a known publisher. Click **More info** > **Run anyway**.
+   - Without the `.exe`: put `Start PC TuneUp.cmd` and `PCTuneUp.ps1` in the same folder and double-click the `.cmd` file. It works the same way.
 3. For the best diagnosis, close your usual programs, wait a minute, then scan **while the fan is loud**.
 4. **Tab 1 (Diagnosis):** click **Scan my PC**. It takes about 15–30 seconds. You get:
    - **"Why is the fan loud?"**: the likely causes, most important first
@@ -62,7 +60,7 @@ The longer tasks (the last four) run in a separate window so you can watch their
 
 ## Where it saves things
 
-In a `PCTuneUp-Data` folder next to the tool, so everything stays on the USB stick. If that folder can't be written to, it uses `%LOCALAPPDATA%\PCTuneUp` instead. That folder holds:
+In a `PCTuneUp-Data` folder next to `PCTuneUp.exe` (or next to the script), so everything stays on the USB stick. If that folder can't be written to, it uses `%LOCALAPPDATA%\PCTuneUp` instead. That folder holds:
 
 - `PC-Report-*.html`: saved reports
 - `tuneup-log.txt`: a log of every change made
@@ -72,13 +70,21 @@ In a `PCTuneUp-Data` folder next to the tool, so everything stays on the USB sti
 
 Windows 10 or 11. It uses Windows PowerShell 5.1, which is built into Windows, so there is nothing to install.
 
-### Optional: make a single .exe
+## How the .exe works
 
-If you'd like one `.exe` file instead of two files, the free `ps2exe` PowerShell module can wrap the script. Installing the module needs internet once, but the `.exe` it makes still works fully offline:
+`PCTuneUp.exe` is a small launcher (about 130 KB) with `PCTuneUp.ps1` built into it. When you start it, it copies the script to `%LOCALAPPDATA%\PCTuneUp\app` and runs it with the Windows PowerShell that comes with Windows. It uses the .NET Framework 4.x already included in Windows 10/11, so there is nothing to install, and it makes no network connections. The launcher source is in `launcher/Launcher.cs`.
 
-```powershell
-Install-Module ps2exe -Scope CurrentUser
-Invoke-ps2exe .\PCTuneUp.ps1 .\PCTuneUp.exe -noConsole -requireAdmin -STA
-```
+## Building the .exe
 
-Some antivirus products flag `.exe` files made this way. If that happens, keep using the `.cmd` launcher.
+- **On Windows:** `powershell -ExecutionPolicy Bypass -File .\build.ps1`. This checks the script for syntax errors, then compiles with the C# compiler built into Windows. The result is `dist\PCTuneUp.exe`.
+- **On Linux/macOS:** install Mono (`mono-mcs`, `mono-devel`) and run `./build.sh`.
+- **Automatically:** GitHub Actions (`.github/workflows/build.yml`) builds the `.exe` on every push and attaches it to the run as an artifact. Pushing a tag such as `v1.0.0` publishes a Release with `PCTuneUp.exe` attached.
+
+## Repository layout
+
+| Path | What it is |
+|---|---|
+| `PCTuneUp.ps1` | The whole application (PowerShell + Windows Forms) |
+| `Start PC TuneUp.cmd` | Launcher to use when you don't have the `.exe` |
+| `launcher/` | `.exe` launcher source, icon and manifest |
+| `build.ps1`, `build.sh` | Build scripts |
